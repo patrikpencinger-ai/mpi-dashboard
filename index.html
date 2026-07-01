@@ -105,6 +105,7 @@
     <button data-t="category">Category deep‑dive</button>
     <button data-t="country">Country profiles</button>
     <button data-t="authority">Authority matrix</button>
+    <button data-t="rpi">Retailers (RPI)</button>
     <button data-t="perf">Targets &amp; performance</button>
     <button data-t="assum">Assumptions &amp; method</button>
   </nav>
@@ -113,6 +114,7 @@
   <section id="tab-category" style="display:none"></section>
   <section id="tab-country" style="display:none"></section>
   <section id="tab-authority" style="display:none"></section>
+  <section id="tab-rpi" style="display:none"></section>
   <section id="tab-perf" style="display:none"></section>
   <section id="tab-assum" style="display:none"></section>
 
@@ -196,6 +198,44 @@ function initAuth(){
   MAIN_KEYS().forEach(k=>{ AUTH[k]=AUTH[k]||{}; COUNTRIES.forEach(x=>{ if(AUTH[k][x.c]===undefined) AUTH[k][x.c]=1; }); });
 }
 const authOf=(k,c)=>{ const parent=SUBSET[k]; const key=parent||k; return (AUTH[key]&&AUTH[key][c]!==undefined)?AUTH[key][c]:1; };
+
+// ---- RPI (Retailer Potential Index) ---------------------------------------
+// Channel archetypes: relative propensity to sell each MAIN category (0 = doesn't carry it).
+// SAMPLE template — replace the seeded retailers with your real accounts (edit reach & actuals inline).
+const ARCHE = {
+  electro:{name:"Electronics specialist", fit:{tv:1.4,ref:0.8,wm:0.7,dryer:0.7,dw:0.7,mw:1.1,vac:1.2,rac:1.0,sac:0.1}},
+  mass:   {name:"Mass / hypermarket",     fit:{tv:1.0,ref:1.2,wm:1.3,dryer:0.9,dw:1.0,mw:1.3,vac:1.2,rac:0.7,sac:0.05}},
+  ecom:   {name:"E‑commerce",             fit:{tv:1.2,ref:1.0,wm:1.0,dryer:1.0,dw:1.1,mw:1.1,vac:1.3,rac:1.1,sac:0.1}},
+  kitchen:{name:"Kitchen / built‑in",     fit:{tv:0.2,ref:1.0,wm:0.9,dryer:1.2,dw:1.5,mw:0.8,vac:0.3,rac:0.3,sac:0.1}},
+  diy:    {name:"DIY / home improvement", fit:{tv:0.4,ref:0.7,wm:0.8,dryer:0.7,dw:0.7,mw:0.7,vac:0.9,rac:1.4,sac:0.3}},
+  btob:   {name:"B2B / HVAC project",     fit:{tv:0,  ref:0.1,wm:0.1,dryer:0.1,dw:0.1,mw:0,  vac:0,  rac:0.5,sac:1.5}},
+};
+const ARCH_W = {electro:1.0, mass:1.3, ecom:1.1, kitchen:0.4, diy:0.6, btob:0.7}; // default within-country reach
+let RET=[];            // retailer registry [{id,country,arch,name,weight}]
+let RETACT={};         // {retailerId: actual sell-through, in current METRIC}
+let SELRC="Croatia";   // selected country for the RPI tab
+function initRET(){
+  if(RET.length) return;
+  COUNTRIES.forEach(x=>Object.keys(ARCHE).forEach(a=>
+    RET.push({id:x.c+"|"+a, country:x.c, arch:a, name:ARCHE[a].name, weight:ARCH_W[a]})));
+}
+// Distribute a country's authority-weighted category potential across its retailers (reach × channel fit).
+function computeRPI(country){
+  const mk=MAIN_KEYS();
+  const rets=RET.filter(r=>r.country===country);
+  const denom={}; mk.forEach(k=> denom[k]=rets.reduce((s,r)=>s+r.weight*ARCHE[r.arch].fit[k],0)||1);
+  const pot={}; mk.forEach(k=>{ const row=R.cats[k].rows.find(x=>x.c===country); const a=authOf(k,country); pot[k]={val:row.value*a, units:row.units*a}; });
+  const out=rets.map(r=>{
+    let val=0, units=0, cs={};
+    mk.forEach(k=>{ const sh=r.weight*ARCHE[r.arch].fit[k]/denom[k]; cs[k]=sh; val+=pot[k].val*sh; units+=pot[k].units*sh; });
+    const act=+RETACT[r.id]||0;
+    return {...r, val, units, cs, act};
+  });
+  const totVal=out.reduce((s,r)=>s+r.val,0)||1, totUnits=out.reduce((s,r)=>s+r.units,0)||1;
+  out.forEach(r=>{ r.shareVal=100*r.val/totVal; r.shareUnits=100*r.units/totUnits;
+    r.pot=METRIC==="val"?r.val:r.units; r.perf=r.act>0&&r.pot>0?100*r.act/r.pot:null; r.covered=r.act>0; });
+  return {rets:out, totVal, totUnits, totPot:METRIC==="val"?totVal:totUnits};
+}
 
 // ---- ENGINE ---------------------------------------------------------------
 function refs(){
@@ -633,6 +673,114 @@ function pairedBars(rows){
   return svg(w,h+6,s);
 }
 
+function renderRPI(){
+  const el=$("#tab-rpi");
+  const mk=MAIN_KEYS();
+  const opts=COUNTRIES.map(x=>`<option ${x.c===SELRC?"selected":""}>${x.c}</option>`).join("");
+  const R2=computeRPI(SELRC);
+  const rets=[...R2.rets].sort((a,b)=>b.pot-a.pot);
+  const coveredPot=R2.rets.filter(r=>r.covered).reduce((s,r)=>s+r.pot,0);
+  const sumAct=R2.rets.reduce((s,r)=>s+r.act,0);
+  const cov=R2.totPot>0?100*coveredPot/R2.totPot:0;
+  const cPerf=coveredPot>0?100*sumAct/coveredPot:null;
+  const mlabel=METRIC==="val"?"€":"units";
+  const fmtPot=v=>METRIC==="val"?eur(v):units(v);
+
+  // retailer table
+  const trows=rets.map(r=>{
+    const perfChip=r.perf==null?'<span class="muted">—</span>':`<span class="tag" style="background:${r.perf>=110?'var(--good)':r.perf>=90?'var(--warn)':'var(--bad)'};color:#06231f">${fmt(r.perf)}</span>`;
+    return `<tr>
+      <td><input class="editbox" style="width:150px;text-align:left" data-rid="${r.id}" data-rf="name" value="${r.name}"></td>
+      <td class="muted small">${ARCHE[r.arch].name}</td>
+      <td class="num"><input class="editbox" style="width:56px" data-rid="${r.id}" data-rf="weight" value="${r.weight}"></td>
+      <td class="num">${fmtPot(r.pot)}</td>
+      <td class="num">${fmt(METRIC==="val"?r.shareVal:r.shareUnits,1)}%</td>
+      <td class="num"><input class="editbox" data-ract="${r.id}" value="${r.act||''}" placeholder="0"></td>
+      <td class="num">${perfChip}</td>
+      <td>${r.covered?'<span class="pill" style="border-color:#1f6f4a;color:#cfe;background:#1f6f4a33">active</span>':'<span class="pill" style="border-color:var(--mut2);color:var(--mut)">whitespace</span>'}</td>
+    </tr>`;}).join("");
+
+  // channel-routing heatmap (retailer × category share within country)
+  const maxCell=Math.max(...R2.rets.flatMap(r=>mk.map(k=>r.cs[k])));
+  const hmHead=`<tr><th style="text-align:left">Retailer \\ Category</th>${mk.map(k=>`<th title="${catName(k)}">${k.toUpperCase()}</th>`).join("")}</tr>`;
+  const hmBody=R2.rets.map(r=>`<tr><td style="text-align:left" class="small">${r.name}</td>${mk.map(k=>{
+    const sh=r.cs[k]; const t=Math.sqrt(sh/(maxCell||1)); const col=mix([29,37,48],[57,194,176],t);
+    return `<td class="num" style="background:${col};font-size:11px" title="${r.name} takes ${fmt(100*sh,0)}% of ${catName(k)} potential in ${SELRC}">${fmt(100*sh,0)}</td>`;
+  }).join("")}</tr>`).join("");
+
+  // cross-country rollup
+  const roll=COUNTRIES.map(x=>{
+    const rp=computeRPI(x.c);
+    const cp=rp.rets.filter(r=>r.covered).reduce((s,r)=>s+r.pot,0);
+    const sa=rp.rets.reduce((s,r)=>s+r.act,0);
+    return {c:x.c, pot:rp.totPot, cov:rp.totPot>0?100*cp/rp.totPot:0, act:sa, perf:cp>0?100*sa/cp:null};
+  }).sort((a,b)=>b.pot-a.pot);
+  const rollBody=roll.map(o=>`<tr><td>${o.c}</td><td class="num">${fmtPot(o.pot)}</td><td class="num">${o.cov>0?fmt(o.cov,0)+'%':'—'}</td><td class="num">${o.act>0?fmtPot(o.act):'—'}</td><td class="num">${o.perf==null?'—':`<span class="tag" style="background:${o.perf>=110?'var(--good)':o.perf>=90?'var(--warn)':'var(--bad)'};color:#06231f">${fmt(o.perf)}</span>`}</td></tr>`).join("");
+
+  el.innerHTML=`
+   <div class="card">
+     <div class="row"><h2 style="margin:0">Retailer Potential Index (RPI)</h2><div class="spacer"></div>
+       <select id="rcSel" style="min-width:200px">${opts}</select>
+       <button class="btn ghost" id="rpiExport">⬇ Retailer CSV</button></div>
+     <div class="desc" style="margin-top:10px">Each country's authority‑weighted category potential is distributed across its retail landscape by <b>channel reach × category fit</b> — so a specialist owns TV/OLED, a kitchen studio owns dishwashers, an HVAC distributor owns System AC. That gives each retailer a <b>fair‑share potential</b>; enter <b>actual sell‑through</b> (${mlabel}) to score it (actual ÷ potential × 100), and see <b>whitespace</b> — potential sitting in retailers you're not active in. Retailers are a <b>SAMPLE template by channel archetype</b> — rename them to your real accounts and set each one's reach.</div>
+     <div class="kpis" style="margin-top:6px;grid-template-columns:repeat(4,1fr)">
+       <div class="kpi"><div class="l">${SELRC} in‑scope potential</div><div class="v">${fmtPot(R2.totPot)}</div><div class="s">${rets.length} retailers · ${metricLabel()}</div></div>
+       <div class="kpi"><div class="l">Active coverage</div><div class="v">${fmt(cov,0)}%</div><div class="s">of potential in active accounts</div></div>
+       <div class="kpi"><div class="l">Actuals entered</div><div class="v">${fmtPot(sumAct)}</div><div class="s">across active retailers</div></div>
+       <div class="kpi"><div class="l">${SELRC} RPI performance</div><div class="v">${cPerf==null?'—':fmt(cPerf)}</div><div class="s">actual ÷ covered potential</div></div>
+     </div>
+   </div>
+
+   <div class="card">
+     <h2>Retailers — ${SELRC}</h2>
+     <div style="overflow-x:auto"><table><thead><tr>
+       <th>Retailer (rename)</th><th>Channel</th><th>Reach</th><th>Potential</th><th>Share</th><th>Actual (${mlabel})</th><th>Perf</th><th>Status</th>
+     </tr></thead><tbody>${trows}</tbody></table></div>
+     <div class="note">“Whitespace” = a retailer with real potential where you have no sales yet — the distribution/listing gap to close. Reach is each account's relative selling power within the country (revenue, stores or floor space); the channel archetype sets which categories it over/under‑indexes on.</div>
+   </div>
+
+   <div class="grid2">
+     <div class="card">
+       <h2>Channel routing — who owns each category</h2>
+       <div class="desc">Each cell = % of ${SELRC}'s potential for that category flowing through that retailer (columns sum to 100%). Shows where to place category focus.</div>
+       <div style="overflow-x:auto"><table>${hmHead}${hmBody}</table></div>
+     </div>
+     <div class="card">
+       <h2>Retailer performance</h2>
+       <div class="desc">${R2.rets.some(r=>r.perf!=null)?"Actual ÷ potential per retailer. Above 100 = beating its RPI potential.":"Enter actual sell‑through in the table to rank retailers."}</div>
+       ${R2.rets.some(r=>r.perf!=null)?hbars(rets.filter(r=>r.perf!=null).map(r=>({c:r.name,v:r.perf})), r=>r.v, v=>fmt(v,0), r=>r.v>=110?"var(--good)":r.v>=90?"var(--warn)":"var(--bad)"):'<div class="muted small" style="padding:20px 0">No retailer actuals yet.</div>'}
+     </div>
+   </div>
+
+   <div class="card">
+     <h2>Cross‑country RPI rollup</h2>
+     <div class="desc">Retailer potential and coverage rolled up per country — the office scorecard. Coverage flags where the retail footprint is thin; performance is actual ÷ covered potential.</div>
+     <div style="overflow-x:auto"><table><thead><tr><th>Country</th><th>In‑scope potential</th><th>Active coverage</th><th>Actual</th><th>RPI perf</th></tr></thead><tbody>${rollBody}</tbody></table></div>
+   </div>
+  `;
+  $("#rcSel").onchange=e=>{SELRC=e.target.value; renderRPI();};
+  $("#rpiExport").onclick=exportRPI;
+  $$("[data-rid]").forEach(inp=>inp.onchange=e=>{
+    const r=RET.find(o=>o.id===e.target.dataset.rid); const f=e.target.dataset.rf;
+    r[f]= f==="weight"?(parseFloat(e.target.value)||0):e.target.value; renderRPI();
+  });
+  $$("[data-ract]").forEach(inp=>inp.onchange=e=>{ RETACT[e.target.dataset.ract]=+e.target.value||0; renderRPI(); });
+}
+
+function exportRPI(){
+  const mk=MAIN_KEYS();
+  const head=["Country","Retailer","Channel","Reach_weight","Potential_value_eur","Potential_units","Share_value_%","Actual","Perf_index"];
+  let lines=[head.join(",")];
+  COUNTRIES.forEach(x=>{
+    computeRPI(x.c).rets.forEach(r=>{
+      lines.push([`"${x.c}"`,`"${r.name}"`,`"${ARCHE[r.arch].name}"`,r.weight,Math.round(r.val),Math.round(r.units),
+        r.shareVal.toFixed(2),r.act||0,r.perf==null?"":Math.round(r.perf)].join(","));
+    });
+  });
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MPI_RPI_retailers.csv"; a.click();
+}
+
 function renderPerf(){
   const el=$("#tab-perf");
   const cat=CATS.find(c=>c.k===SELCAT);
@@ -828,6 +976,7 @@ function renderAll(){
   if(TAB==="category")renderCategory();
   if(TAB==="country")renderCountry();
   if(TAB==="authority")renderAuthority();
+  if(TAB==="rpi")renderRPI();
   if(TAB==="perf")renderPerf();
   if(TAB==="assum")renderAssum();
   $("#footer").innerHTML=`MPI Phase 1 · ${COUNTRIES.length} markets × ${CATS.length} category lines · dependency‑free, runs offline · indicative data — replace with internal market figures. Reference (pop‑weighted): AIC ${fmt(R.REF.aic,1)} · CDD ${fmt(R.REF.cdd)} · Tour ${fmt(R.REF.tour,1)} · Urban ${fmt(R.REF.urb)}%.`;
@@ -835,7 +984,7 @@ function renderAll(){
 function showTab(t){
   TAB=t;
   $$("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
-  ["overview","category","country","authority","perf","assum"].forEach(x=>$("#tab-"+x).style.display=x===t?"block":"none");
+  ["overview","category","country","authority","rpi","perf","assum"].forEach(x=>$("#tab-"+x).style.display=x===t?"block":"none");
   renderAll();
 }
 $$("#tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.t));
@@ -843,6 +992,7 @@ $$("#metricSeg button").forEach(b=>b.onclick=()=>{METRIC=b.dataset.m; $$("#metri
 $("#exportBtn").onclick=exportCSV;
 
 // ---- INIT -----------------------------------------------------------------
+initRET();
 recompute();
 showTab("overview");
 </script>

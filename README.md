@@ -17,14 +17,15 @@ Buying‑power‑adjusted sales‑potential index comparing **10 South‑East Eu
 
 The dashboard's **Assumptions tab** holds the same inputs as live‑editable tables — change any number and everything recomputes instantly. The CSVs are for editing in Excel / sharing; to load changes, update the corresponding `COUNTRIES` / `CATS` block at the top of the `<script>` in the HTML (clearly commented), or edit inline in the Assumptions tab.
 
-## The six tabs
+## The seven tabs
 
 1. **Overview** — country × category intensity heatmap + composite share & intensity rankings.
 2. **Category deep‑dive** — per‑category share bars, buying‑power‑vs‑intensity scatter, and the **final table** with a per‑driver transparency block (×Income, ×Climate, ×Tour, ×Urban, ×Share).
 3. **Country profiles** — radar of category strengths + full per‑category table for one country.
 4. **Authority matrix** — editable country × category mandate grid (1 = full authority, 0 = out of scope). Produces a **strategy‑weighted composite** kept separate from the neutral demand model, and can drive the target split.
-5. **Targets & performance** — split a scope target by potential (optionally weighted by authority); paste actuals to score **Perf‑abs** (non‑zero‑sum) and **Perf‑rel**.
-6. **Assumptions & method** — editable inputs, methodology, data sources, Phase‑2 roadmap.
+5. **Retailers (RPI)** — distributes each country's category potential across its retail landscape by **channel reach × category fit**; enter actual sell‑through to score each retailer, see **whitespace** (untapped accounts) and a **cross‑country rollup** (office scorecard). Seeded with editable channel‑archetype retailers — rename to your real accounts.
+6. **Targets & performance** — split a scope target by potential (optionally weighted by authority); paste actuals to score **Perf‑abs** (non‑zero‑sum) and **Perf‑rel**.
+7. **Assumptions & method** — editable inputs, methodology, data sources, Phase‑2 roadmap.
 
 Top‑right: toggle **Value (€) / Volume (units)** and **Export master CSV**.
 
