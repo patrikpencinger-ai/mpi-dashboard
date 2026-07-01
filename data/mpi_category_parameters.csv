@@ -1,0 +1,12 @@
+Category,Key,Group,Demand_base,Beta_income,Climate_weight,Tourism_weight,Urban_weight,ASP_income_sens,ASP_base_EUR,Scope_market_units,Subset_of,Share_Smax,Share_A0,Share_k
+TV (total),tv,Vision,households,0.40,0,0.05,0.05,0.30,420,3500000,,,,
+OLED TV,oled,Vision,households,0.40,0,0,0.15,0.55,1500,,tv,0.10,74,0.06
+Refrigerators (total),ref,Cooling,households,0.35,0.05,0.05,0,0.30,450,2200000,,,,
+REF multi-door / SbS,refmd,Cooling,households,0.35,0.10,0,-0.10,0.55,1300,,ref,0.28,72,0.06
+Washing machines,wm,Laundry,households,0.40,0,0.05,0.05,0.28,420,2400000,,,,
+Tumble dryers + combo,dryer,Laundry,households,1.30,-0.40,0.05,0.25,0.45,600,350000,,,,
+Dishwashers,dw,Kitchen,households,1.30,0,0.05,0.25,0.40,480,700000,,,,
+Microwave ovens,mw,Kitchen,households,0.40,0,0.05,0.10,0.22,110,1500000,,,,
+Vacuum cleaners,vac,Floorcare,households,0.50,0,0.05,0.05,0.45,130,3000000,,,,
+Room AC (residential),rac,Climate,households,1.20,0.85,0.25,0.20,0.35,550,900000,,,,
+System AC (professional),sac,Climate,commercial,1.30,0.65,0.65,0.45,0.40,9000,60000,,,,

@@ -1,0 +1,11 @@
+Country,Population_M,Household_size,Households_M,AIC_PPS_EU100,Price_level_EU100,Urbanization_pct,GDP_PPP_USD,Cooling_degree_days,Tourism_overnights_per_capita,Commercial_stock_index,EU_member,Data_confidence
+Slovenia,2.12,2.40,0.883,86,91,56.1,56531,110,8.0,120,1,H
+Croatia,3.86,2.70,1.430,79,76,58.6,48575,430,24.2,150,1,H
+Hungary,9.58,2.30,4.165,73,76,72.9,47636,230,4.0,130,1,H
+Bulgaria,6.45,2.20,2.932,73,60,76.7,41086,330,4.5,105,1,H
+Montenegro,0.62,2.87,0.216,70,64,68.5,33380,420,26.0,135,0,M
+Serbia,6.62,2.64,2.508,56,68,62.1,31867,290,1.5,85,0,M
+North Macedonia,1.83,3.06,0.598,49,52,59.5,26587,320,1.2,60,0,M
+Albania,2.40,3.20,0.750,47,66,64.6,23488,480,3.5,90,0,M
+Bosnia & Herzegovina,3.21,2.90,1.107,42,58,50.3,21971,130,1.3,60,0,M
+Kosovo,1.59,4.33,0.367,39,50,50.2,18620,200,0.8,55,0,L

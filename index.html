@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPI — Market Potential Index · SE Europe Appliances</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#171d26; --panel2:#1d2530; --line:#2a3340;
+    --txt:#e6edf3; --mut:#8b97a7; --mut2:#5d6b7d;
+    --accent:#39c2b0; --accent2:#5b8def; --warn:#f2a541; --bad:#e5604d; --good:#4cc38a;
+    --hi:#7c5cff;
+    --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45}
+  a{color:var(--accent2)}
+  .wrap{max-width:1480px;margin:0 auto;padding:18px 22px 80px}
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .title h1{margin:0;font-size:22px;letter-spacing:.3px}
+  .title .sub{color:var(--mut);font-size:12.5px;margin-top:3px}
+  .scope{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:var(--panel2);border:1px solid var(--line);color:var(--mut);
+    padding:2px 8px;border-radius:20px;font-size:11px}
+  .gctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:transparent;border:0;color:var(--mut);padding:7px 13px;cursor:pointer;font-size:12.5px}
+  .seg button.on{background:var(--accent);color:#06231f;font-weight:600}
+  select,input[type=number],input[type=text]{background:var(--panel2);border:1px solid var(--line);
+    color:var(--txt);border-radius:7px;padding:6px 9px;font-size:13px;font-family:inherit}
+  select:focus,input:focus{outline:1px solid var(--accent)}
+  nav.tabs{display:flex;gap:4px;margin:16px 0 18px;flex-wrap:wrap}
+  nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--mut);
+    padding:9px 16px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:500}
+  nav.tabs button.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+    box-shadow:var(--shadow);margin-bottom:18px}
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .desc{color:var(--mut);font-size:12.5px;margin-bottom:14px;max-width:980px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:1080px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+  .kpi .l{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px}
+  .kpi .v{font-size:23px;font-weight:650;margin-top:5px}
+  .kpi .s{color:var(--mut);font-size:11.5px;margin-top:2px}
+  table{border-collapse:collapse;width:100%;font-size:12.7px}
+  th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--mut);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;
+    position:sticky;top:0;background:var(--panel);cursor:pointer}
+  tbody tr:hover{background:var(--panel2)}
+  td.num{font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:600}
+  .muted{color:var(--mut)}
+  .legend{display:flex;gap:14px;align-items:center;color:var(--mut);font-size:11.5px;flex-wrap:wrap}
+  .swatch{width:13px;height:13px;border-radius:3px;display:inline-block;vertical-align:-2px;margin-right:5px}
+  .note{background:var(--panel2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;
+    color:var(--mut);font-size:12.3px;margin-top:10px}
+  .editbox{background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:78px;text-align:right;
+    padding:4px 6px;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
+  .btn{background:var(--accent);border:0;color:#06231f;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .spacer{flex:1}
+  svg text{fill:var(--txt)}
+  .small{font-size:11.5px}
+  .pill{font-size:11px;padding:2px 7px;border-radius:10px;border:1px solid var(--line)}
+  .barlabel{fill:var(--mut);font-size:11px}
+  details summary{cursor:pointer;color:var(--accent2);font-size:12.5px;margin-top:6px}
+  .footer{color:var(--mut2);font-size:11.5px;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+  .flex-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="title">
+      <h1>MPI · Market Potential Index</h1>
+      <div class="sub">Buying‑power‑adjusted sales potential by country &amp; product category · South‑East Europe · Phase 1</div>
+      <div class="scope" id="scopeChips"></div>
+    </div>
+    <div class="gctrl">
+      <div>
+        <div class="muted small" style="margin-bottom:4px">Potential metric</div>
+        <div class="seg" id="metricSeg">
+          <button data-m="val" class="on">Value (€)</button>
+          <button data-m="vol">Volume (units)</button>
+        </div>
+      </div>
+      <div>
+        <div class="muted small" style="margin-bottom:4px">&nbsp;</div>
+        <button class="btn ghost" id="exportBtn">⬇ Export master CSV</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-t="overview" class="on">Overview</button>
+    <button data-t="category">Category deep‑dive</button>
+    <button data-t="country">Country profiles</button>
+    <button data-t="authority">Authority matrix</button>
+    <button data-t="perf">Targets &amp; performance</button>
+    <button data-t="assum">Assumptions &amp; method</button>
+  </nav>
+
+  <section id="tab-overview"></section>
+  <section id="tab-category" style="display:none"></section>
+  <section id="tab-country" style="display:none"></section>
+  <section id="tab-authority" style="display:none"></section>
+  <section id="tab-perf" style="display:none"></section>
+  <section id="tab-assum" style="display:none"></section>
+
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+/* ============================================================================
+   MPI ENGINE  — transparent, editable, dependency-free
+   Demand model (Cobb–Douglas / log-linear):
+   RAW_vol(c,k) = Base(c,k)
+                * (AIC_c/AICref)^beta
+                * (CDD_c/CDDref)^climate
+                * (TOUR_c/TOURref)^tourism
+                * (URB_c/URBref)^urban
+                * subsetShare(c)               (premium slice / adoption rate)
+   RAW_val(c,k) = RAW_vol * ASP(c,k),  ASP = baseASP * (AIC/AICref)^aspSens * (PLI/PLIref)^0.5
+   Outputs: potential share %, intensity index (per-base vs scope avg=100), absolute units/€,
+            target allocation, performance index (actual share / potential share *100).
+   ============================================================================ */
+
+// ---- COUNTRY DATA (Eurostat 2024 first estimates, 2021-24 censuses; edit in Assumptions tab) ----
+// aic = Actual Individual Consumption per capita, PPS (EU27=100). pli = comparative price level (EU27=100).
+// cdd = multi-year cooling-degree-days. tour = tourist overnights / capita. comm = commercial-stock index (scope~100).
+// conf = data confidence (H/M/L) — lower for non-EU census-gap markets.
+let COUNTRIES = [
+  // name, pop(M), hhSize, AIC, PLI, urban%, gdpPppUSD, CDD, tourPerCap, commIdx, eu, conf
+  {c:"Slovenia",        pop:2.12, hh:2.40, aic:86, pli:91, urb:56.1, gdp:56531, cdd:110, tour:8.0,  comm:120, eu:1, conf:"H"},
+  {c:"Croatia",         pop:3.86, hh:2.70, aic:79, pli:76, urb:58.6, gdp:48575, cdd:430, tour:24.2, comm:150, eu:1, conf:"H"},
+  {c:"Hungary",         pop:9.58, hh:2.30, aic:73, pli:76, urb:72.9, gdp:47636, cdd:230, tour:4.0,  comm:130, eu:1, conf:"H"},
+  {c:"Bulgaria",        pop:6.45, hh:2.20, aic:73, pli:60, urb:76.7, gdp:41086, cdd:330, tour:4.5,  comm:105, eu:1, conf:"H"},
+  {c:"Montenegro",      pop:0.62, hh:2.87, aic:70, pli:64, urb:68.5, gdp:33380, cdd:420, tour:26.0, comm:135, eu:0, conf:"M"},
+  {c:"Serbia",          pop:6.62, hh:2.64, aic:56, pli:68, urb:62.1, gdp:31867, cdd:290, tour:1.5,  comm:85,  eu:0, conf:"M"},
+  {c:"North Macedonia", pop:1.83, hh:3.06, aic:49, pli:52, urb:59.5, gdp:26587, cdd:320, tour:1.2,  comm:60,  eu:0, conf:"M"},
+  {c:"Albania",         pop:2.40, hh:3.20, aic:47, pli:66, urb:64.6, gdp:23488, cdd:480, tour:3.5,  comm:90,  eu:0, conf:"M"},
+  {c:"Bosnia & Herz.",  pop:3.21, hh:2.90, aic:42, pli:58, urb:50.3, gdp:21971, cdd:130, tour:1.3,  comm:60,  eu:0, conf:"M"},
+  {c:"Kosovo",          pop:1.59, hh:4.33, aic:39, pli:50, urb:50.2, gdp:18620, cdd:200, tour:0.8,  comm:55,  eu:0, conf:"L"},
+];
+
+// ---- CATEGORY PARAMETERS --------------------------------------------------
+// base: hh|pop|comm. beta: income elasticity. cw/tw/uw: climate/tourism/urban exponents.
+// asp: regional base ASP €. aspSens: premium-mix income sensitivity (0-1).
+// parent: if subset, the parent key. share: logistic adoption/premium share in AIC.
+// total: indicative annual scope market size (units) — editable. group label for UI.
+// beta moderated to committed defaults (necessities 0.35-0.5, discretionary 1.2-1.3).
+// Premium subsets (oled, refmd) carry the PARENT's low beta; their income tilt lives ONLY in the
+// share logistic (single income channel — no double-count). Dryer is a standalone discretionary
+// line (single beta, NO share logistic) with a NEGATIVE climate weight (sunny ⇒ line-drying).
+// aspSens = within-tier price/quality ladder only (mix is handled by the premium lines), so parents
+// get a low aspSens; premium subsets keep a higher one.
+let CATS = [
+  {k:"tv",   name:"TV (total)",             grp:"Vision",   base:"hh",  beta:0.40, cw:0,    tw:0.05,uw:0.05, asp:420,  aspSens:0.30, total:3500000},
+  {k:"oled", name:"OLED TV",                grp:"Vision",   base:"hh",  beta:0.40, cw:0,    tw:0,   uw:0.15, asp:1500, aspSens:0.55, parent:"tv",  share:{Smax:0.10,A0:74,kk:0.06}},
+  {k:"ref",  name:"Refrigerators (total)",  grp:"Cooling",  base:"hh",  beta:0.35, cw:0.05, tw:0.05,uw:0,    asp:450,  aspSens:0.30, total:2200000},
+  {k:"refmd",name:"REF multi‑door / SbS",   grp:"Cooling",  base:"hh",  beta:0.35, cw:0.10, tw:0,   uw:-0.10,asp:1300, aspSens:0.55, parent:"ref", share:{Smax:0.28,A0:72,kk:0.06}},
+  {k:"wm",   name:"Washing machines",       grp:"Laundry",  base:"hh",  beta:0.40, cw:0,    tw:0.05,uw:0.05, asp:420,  aspSens:0.28, total:2400000},
+  {k:"dryer",name:"Tumble dryers + combo",  grp:"Laundry",  base:"hh",  beta:1.30, cw:-0.40,tw:0.05,uw:0.25, asp:600,  aspSens:0.45, total:350000},
+  {k:"dw",   name:"Dishwashers",            grp:"Kitchen",  base:"hh",  beta:1.30, cw:0,    tw:0.05,uw:0.25, asp:480,  aspSens:0.40, total:700000},
+  {k:"mw",   name:"Microwave ovens",        grp:"Kitchen",  base:"hh",  beta:0.40, cw:0,    tw:0.05,uw:0.10, asp:110,  aspSens:0.22, total:1500000},
+  {k:"vac",  name:"Vacuum cleaners",        grp:"Floorcare",base:"hh",  beta:0.50, cw:0,    tw:0.05,uw:0.05, asp:130,  aspSens:0.45, total:3000000},
+  {k:"rac",  name:"Room AC (residential)",  grp:"Climate",  base:"hh",  beta:1.20, cw:0.85, tw:0.25,uw:0.20, asp:550,  aspSens:0.35, total:900000},
+  {k:"sac",  name:"System AC (professional)",grp:"Climate", base:"comm",beta:1.30, cw:0.65, tw:0.65,uw:0.45, asp:9000, aspSens:0.40, total:60000},
+];
+const SUBSET = {oled:"tv", refmd:"ref"};
+const MAIN_KEYS = ()=>CATS.filter(c=>!c.parent).map(c=>c.k);
+// Residential composite excludes premium subsets AND the commercial-base System AC (different base ⇒ not mixed).
+const COMPOSITE_KEYS = ()=>CATS.filter(c=>!c.parent && c.base==="hh").map(c=>c.k);
+
+// ---- STATE ----------------------------------------------------------------
+let METRIC = "val";              // 'val' | 'vol'
+let SELCAT = "dw";
+let SELCOUNTRY = "Croatia";
+let ACTUALS = {};                // {catKey:{country:number}}
+let TARGETS = {};                // {catKey:number}  total scope target
+let AUTH = {};                   // product-authority matrix: AUTH[catKey][country] = weight 0..1 (1 = full mandate)
+let AUTHW = false;               // Targets tab: weight the target split by authority
+let R = null;                    // last computed result
+
+// Authority matrix over the main (non-subset) category lines; default = full authority (1) everywhere.
+function initAuth(){
+  MAIN_KEYS().forEach(k=>{ AUTH[k]=AUTH[k]||{}; COUNTRIES.forEach(x=>{ if(AUTH[k][x.c]===undefined) AUTH[k][x.c]=1; }); });
+}
+const authOf=(k,c)=>{ const parent=SUBSET[k]; const key=parent||k; return (AUTH[key]&&AUTH[key][c]!==undefined)?AUTH[key][c]:1; };
+
+// ---- ENGINE ---------------------------------------------------------------
+function refs(){
+  const tp = COUNTRIES.reduce((s,x)=>s+x.pop,0);
+  const wm=(f)=>COUNTRIES.reduce((s,x)=>s+f(x)*x.pop,0)/tp;
+  return {aic:wm(x=>x.aic), cdd:wm(x=>x.cdd), tour:wm(x=>x.tour), urb:wm(x=>x.urb), pli:wm(x=>x.pli)};
+}
+const logistic=(aic,s)=>s.Smax/(1+Math.exp(-s.kk*(aic-s.A0)));
+function baseUnits(x,cat){
+  if(cat.base==="hh")  return x.pop/x.hh;
+  if(cat.base==="pop") return x.pop;
+  if(cat.base==="comm")return (x.pop/x.hh)*(x.comm/100);
+  return x.pop/x.hh;
+}
+function compute(){
+  const REF=refs();
+  const out={REF, cats:{}};
+  for(const cat of CATS){
+    const rows=COUNTRIES.map(x=>{
+      const base=baseUnits(x,cat);
+      // multiplicative driver factors (each = 1 at the regional reference) — stored for the transparency block
+      const fInc =Math.pow(x.aic/REF.aic,cat.beta);
+      const fCli =cat.cw?Math.pow(x.cdd/REF.cdd,cat.cw):1;
+      const fTour=cat.tw?Math.pow(x.tour/REF.tour,cat.tw):1;
+      const fUrb =cat.uw?Math.pow(x.urb/REF.urb,cat.uw):1;
+      const fShare=cat.share?logistic(x.aic,cat.share):1;   // premium-subset / adoption share
+      const vol=base*fInc*fCli*fTour*fUrb*fShare;
+      const asp=cat.asp*Math.pow(x.aic/REF.aic,cat.aspSens)*Math.pow(x.pli/REF.pli,0.5);
+      return {c:x.c, conf:x.conf, base, vol, asp, val:vol*asp, intRaw:vol/base,
+              f:{inc:fInc, cli:fCli, tour:fTour, urb:fUrb, share:fShare}};
+    });
+    const sV=rows.reduce((s,r)=>s+r.vol,0), sE=rows.reduce((s,r)=>s+r.val,0);
+    const mI=rows.reduce((s,r)=>s+r.intRaw,0)/rows.length;
+    // absolute units: subset total derived from parent
+    let totUnits=cat.total;
+    if(cat.parent){
+      const p=CATS.find(t=>t.k===cat.parent);
+      // scope subset share = sum(parentVol*subsetShare)/sum(parentVol) approximated via this cat's vol vs parent vol
+      const pRows=out.cats[cat.parent]?out.cats[cat.parent].rows:null;
+      if(pRows){
+        const subScope=rows.reduce((s,r)=>s+r.vol,0)/pRows.reduce((s,r)=>s+r.vol,0);
+        totUnits=p.total*subScope;
+      } else totUnits=p.total*0.15;
+    }
+    rows.forEach(r=>{
+      r.shareVol=100*r.vol/sV;
+      r.shareVal=100*r.val/sE;
+      r.intensity=100*r.intRaw/mI;
+      r.units=totUnits*r.vol/sV;
+      r.value=r.units*r.asp;
+    });
+    out.cats[cat.k]={rows, sumVol:sV, sumVal:sE, totUnits,
+      totValue:rows.reduce((s,r)=>s+r.value,0)};
+  }
+  // composite country index (residential categories only — excludes premium subsets & commercial System AC)
+  const comp={};
+  COUNTRIES.forEach(x=>comp[x.c]={value:0,base:x.pop/x.hh});
+  COMPOSITE_KEYS().forEach(k=>{ out.cats[k].rows.forEach(r=>comp[r.c].value+=r.value); });
+  const totComp=Object.values(comp).reduce((s,o)=>s+o.value,0);
+  const meanIntC=Object.values(comp).reduce((s,o)=>s+o.value/o.base,0)/COUNTRIES.length;
+  Object.values(comp).forEach(o=>{o.share=100*o.value/totComp; o.intensity=100*(o.value/o.base)/meanIntC;});
+  out.comp=comp; out.compTotal=totComp;
+
+  // strategy-weighted composite: total in-scope € opportunity across ALL main lines, weighted by the
+  // product-authority matrix (0 = not our mandate → excluded). Kept separate from the neutral demand composite.
+  initAuth();
+  const comp2={};
+  COUNTRIES.forEach(x=>comp2[x.c]={value:0,base:x.pop/x.hh});
+  MAIN_KEYS().forEach(k=>{ out.cats[k].rows.forEach(r=>{ comp2[r.c].value += r.value*authOf(k,r.c); }); });
+  const totComp2=Object.values(comp2).reduce((s,o)=>s+o.value,0)||1;
+  Object.values(comp2).forEach(o=>{o.share=100*o.value/totComp2;});
+  out.comp2=comp2; out.comp2Total=totComp2;
+  return out;
+}
+function recompute(){ R=compute(); }
+
+// ---- HELPERS --------------------------------------------------------------
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const fmt=(n,d=0)=>n.toLocaleString("en-US",{maximumFractionDigits:d,minimumFractionDigits:d});
+const eur=(n)=> n>=1e9?"€"+fmt(n/1e9,2)+"B" : n>=1e6?"€"+fmt(n/1e6,1)+"M" : n>=1e3?"€"+fmt(n/1e3,0)+"k" : "€"+fmt(n);
+const units=(n)=> n>=1e6?fmt(n/1e6,2)+"M" : n>=1e3?fmt(n/1e3,0)+"k" : fmt(n);
+const catName=(k)=>CATS.find(c=>c.k===k).name;
+const metricShare=(r)=>METRIC==="val"?r.shareVal:r.shareVol;
+const metricLabel=()=>METRIC==="val"?"Value (€)":"Volume (units)";
+
+// diverging color around index=100  (low=blue, mid=grey, high=teal)
+function intColor(v){
+  const t=Math.max(0,Math.min(2,v/100)); // 0..2
+  if(t<1){ const a=t; return mix([91,141,239],[120,130,145],a); }
+  const a=Math.min(1,(t-1)); return mix([120,130,145],[57,194,176],a);
+}
+function mix(a,b,t){return `rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*t)).join(",")})`}
+function shareColor(v,max){ const t=Math.sqrt(Math.max(0,v)/(max||1)); return mix([29,37,48],[57,194,176],t); }
+// factor cell tint: <1 cool, =1 neutral, >1 warm — so the dominant lever is visible at a glance
+function facColor(v){ if(v>=1){const t=Math.min(1,(v-1)/1.0); return mix([29,37,48],[57,194,176],t);} const t=Math.min(1,(1-v)/0.6); return mix([29,37,48],[91,141,239],t); }
+const CONF={H:["#1f6f4a","high conf."],M:["#7a5d1e","med conf."],L:["#7a2f28","low conf."]};
+function confBadge(c){const m=CONF[c]||CONF.M; return `<span class="pill" style="border-color:${m[0]};color:#cfe;background:${m[0]}33" title="Data confidence: ${m[1]}">${c}</span>`;}
+
+// ---- SVG CHART BUILDERS ---------------------------------------------------
+function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" width="100%" preserveAspectRatio="xMidYMid meet" style="max-height:${h}px">${inner}</svg>`}
+
+function heatmap(){
+  const cats=CATS, cs=COUNTRIES;
+  const left=130, top=64, cw=Math.max(60,(1080-left)/cats.length), ch=30, w=left+cw*cats.length+20, h=top+ch*cs.length+20;
+  let s="";
+  // header
+  cats.forEach((c,j)=>{
+    s+=`<text x="${left+cw*j+cw/2}" y="${top-44}" transform="rotate(-32 ${left+cw*j+cw/2} ${top-44})" text-anchor="start" font-size="10.5" fill="var(--mut)">${c.k.toUpperCase()}</text>`;
+  });
+  cs.forEach((x,i)=>{
+    s+=`<text x="${left-8}" y="${top+ch*i+ch/2+4}" text-anchor="end" font-size="11">${x.c}</text>`;
+    cats.forEach((c,j)=>{
+      const r=R.cats[c.k].rows[i];
+      const col=intColor(r.intensity);
+      s+=`<rect x="${left+cw*j+1}" y="${top+ch*i+1}" width="${cw-2}" height="${ch-2}" rx="3" fill="${col}">
+            <title>${x.c} · ${c.name}\nIntensity (per-base vs avg=100): ${fmt(r.intensity)}\n${metricLabel()} share: ${fmt(metricShare(r),1)}%\nEst. ${units(r.units)} units · ${eur(r.value)}</title></rect>`;
+      const tcol=r.intensity>118?"#06231f":"var(--txt)";
+      s+=`<text x="${left+cw*j+cw/2}" y="${top+ch*i+ch/2+4}" text-anchor="middle" font-size="10.5" fill="${tcol}">${fmt(r.intensity)}</text>`;
+    });
+  });
+  return svg(w,h,s);
+}
+
+function hbars(rows, valFn, fmtFn, color){
+  const max=Math.max(...rows.map(valFn))||1;
+  const rh=26, left=128, w=1040, h=rows.length*rh+10;
+  let s="";
+  rows.forEach((r,i)=>{
+    const v=valFn(r), bw=(w-left-90)*v/max;
+    s+=`<text x="${left-8}" y="${i*rh+17}" text-anchor="end" font-size="11.5">${r.c}</text>`;
+    s+=`<rect x="${left}" y="${i*rh+5}" width="${Math.max(2,bw)}" height="15" rx="3" fill="${typeof color==="function"?color(r):color}"></rect>`;
+    s+=`<text x="${left+Math.max(2,bw)+6}" y="${i*rh+17}" font-size="11" fill="var(--mut)">${fmtFn(v)}</text>`;
+  });
+  return svg(w,h,s);
+}
+
+function scatter(){
+  const rows=R.cats[SELCAT].rows.map((r,i)=>({...r, aic:COUNTRIES[i].aic, pop:COUNTRIES[i].pop}));
+  const W=1040,H=440,pad=54;
+  const xs=rows.map(r=>r.aic), ys=rows.map(r=>r.intensity);
+  const xmin=Math.min(...xs)-4,xmax=Math.max(...xs)+4, ymin=0,ymax=Math.max(120,Math.max(...ys)*1.12);
+  const X=v=>pad+(W-pad-20)*(v-xmin)/(xmax-xmin);
+  const Y=v=>H-pad-(H-pad-20)*(v-ymin)/(ymax-ymin);
+  const rmax=Math.max(...rows.map(r=>r.value));
+  let s="";
+  // gridlines
+  for(let g=0;g<=ymax;g+=50){ s+=`<line x1="${pad}" y1="${Y(g)}" x2="${W-20}" y2="${Y(g)}" stroke="var(--line)"/><text x="${pad-8}" y="${Y(g)+4}" text-anchor="end" font-size="10" fill="var(--mut)">${g}</text>`;}
+  s+=`<line x1="${pad}" y1="${Y(100)}" x2="${W-20}" y2="${Y(100)}" stroke="var(--warn)" stroke-dasharray="5 4"/>`;
+  s+=`<text x="${W-24}" y="${Y(100)-6}" text-anchor="end" font-size="10.5" fill="var(--warn)">scope avg intensity = 100</text>`;
+  // x labels
+  for(let g=Math.ceil(xmin/10)*10; g<=xmax; g+=10){ s+=`<text x="${X(g)}" y="${H-pad+18}" text-anchor="middle" font-size="10" fill="var(--mut)">${g}</text>`;}
+  s+=`<text x="${(W)/2}" y="${H-12}" text-anchor="middle" font-size="11.5" fill="var(--mut)">Buying power — AIC per capita (EU27=100)</text>`;
+  s+=`<text x="16" y="${H/2}" transform="rotate(-90 16 ${H/2})" text-anchor="middle" font-size="11.5" fill="var(--mut)">Potential intensity (per household, avg=100)</text>`;
+  rows.forEach(r=>{
+    const rad=8+26*Math.sqrt(r.value/rmax);
+    s+=`<circle cx="${X(r.aic)}" cy="${Y(r.intensity)}" r="${rad}" fill="${intColor(r.intensity)}" fill-opacity="0.82" stroke="#0b0f14" stroke-width="1">
+        <title>${r.c}\nAIC ${r.aic} · intensity ${fmt(r.intensity)}\n${eur(r.value)} potential · ${units(r.units)} units</title></circle>`;
+    s+=`<text x="${X(r.aic)}" y="${Y(r.intensity)-rad-4}" text-anchor="middle" font-size="10.5">${r.c}</text>`;
+  });
+  return svg(W,H,s);
+}
+
+function radar(){
+  const keys=COMPOSITE_KEYS();   // residential categories only (consistent per-household base)
+  const x=COUNTRIES.find(o=>o.c===SELCOUNTRY); const idx=COUNTRIES.indexOf(x);
+  const vals=keys.map(k=>R.cats[k].rows[idx].intensity);
+  const W=560,H=460,cx=W/2,cy=H/2+8,rad=165, n=keys.length;
+  const maxV=Math.max(150,...vals);
+  let s="";
+  for(let ring=50;ring<=maxV;ring+=50){
+    let p=""; for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n; p+=(i?"L":"M")+(cx+rad*ring/maxV*Math.cos(a))+","+(cy+rad*ring/maxV*Math.sin(a));}
+    s+=`<path d="${p}Z" fill="none" stroke="var(--line)"/>`;
+    s+=`<text x="${cx+3}" y="${cy-rad*ring/maxV+3}" font-size="9" fill="var(--mut2)">${ring}</text>`;
+  }
+  keys.forEach((k,i)=>{
+    const a=-Math.PI/2+i*2*Math.PI/n;
+    s+=`<line x1="${cx}" y1="${cy}" x2="${cx+rad*Math.cos(a)}" y2="${cy+rad*Math.sin(a)}" stroke="var(--line)"/>`;
+    const lx=cx+(rad+22)*Math.cos(a), ly=cy+(rad+14)*Math.sin(a);
+    s+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10.5" fill="var(--mut)">${k.toUpperCase()}</text>`;
+  });
+  let p="";
+  vals.forEach((v,i)=>{const a=-Math.PI/2+i*2*Math.PI/n; const rr=rad*Math.min(v,maxV)/maxV; p+=(i?"L":"M")+(cx+rr*Math.cos(a))+","+(cy+rr*Math.sin(a));});
+  s+=`<path d="${p}Z" fill="rgba(57,194,176,.22)" stroke="var(--accent)" stroke-width="2"/>`;
+  vals.forEach((v,i)=>{const a=-Math.PI/2+i*2*Math.PI/n; const rr=rad*Math.min(v,maxV)/maxV; s+=`<circle cx="${cx+rr*Math.cos(a)}" cy="${cy+rr*Math.sin(a)}" r="3.2" fill="var(--accent)"/>`;});
+  // reference ring at 100
+  let p100=""; for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n; const rr=rad*100/maxV; p100+=(i?"L":"M")+(cx+rr*Math.cos(a))+","+(cy+rr*Math.sin(a));}
+  s+=`<path d="${p100}Z" fill="none" stroke="var(--warn)" stroke-dasharray="4 4"/>`;
+  return svg(W,H,s);
+}
+
+// ---- TAB RENDERERS --------------------------------------------------------
+function renderScope(){
+  $("#scopeChips").innerHTML = COUNTRIES.map(x=>`<span class="chip">${x.c}</span>`).join("");
+}
+
+function renderOverview(){
+  const el=$("#tab-overview");
+  // KPIs
+  const totVal=MAIN_KEYS().reduce((s,k)=>s+R.cats[k].totValue,0);
+  const totUnits=MAIN_KEYS().reduce((s,k)=>s+R.cats[k].totUnits,0);
+  const totHH=COUNTRIES.reduce((s,x)=>s+x.pop/x.hh,0);
+  const compArr=Object.entries(R.comp).map(([c,o])=>({c,...o})).sort((a,b)=>b.share-a.share);
+  const topC=compArr[0], topI=[...compArr].sort((a,b)=>b.intensity-a.intensity)[0];
+  el.innerHTML=`
+   <div class="kpis">
+     <div class="kpi"><div class="l">Scope households</div><div class="v">${fmt(totHH*1e6/1e6,2)}M</div><div class="s">${COUNTRIES.length} countries · ${fmt(COUNTRIES.reduce((s,x)=>s+x.pop,0),1)}M people</div></div>
+     <div class="kpi"><div class="l">Annual potential value</div><div class="v">${eur(totVal)}</div><div class="s">9 main categories, indicative</div></div>
+     <div class="kpi"><div class="l">Annual potential units</div><div class="v">${units(totUnits)}</div><div class="s">across main categories</div></div>
+     <div class="kpi"><div class="l">Largest market (composite)</div><div class="v">${topC.c}</div><div class="s">${fmt(topC.share,1)}% of scope value potential</div></div>
+     <div class="kpi"><div class="l">Highest intensity</div><div class="v">${topI.c}</div><div class="s">index ${fmt(topI.intensity)} (per‑household)</div></div>
+   </div>
+
+   <div class="card">
+     <div class="flex-head"><div>
+       <h2>Potential intensity heatmap — country × category</h2>
+       <div class="desc">Each cell is the <b>intensity index</b>: buying‑power‑adjusted potential <i>per household</i> (per commercial unit for System AC), normalised so the scope average = 100. &gt;100 means a household there is worth more than the regional average for that category; &lt;100 means less. This is the fair‑share lens — it strips out country size.</div>
+     </div></div>
+     <div class="legend" style="margin-bottom:8px">
+       <span><span class="swatch" style="background:rgb(91,141,239)"></span>≤ 50 (below avg)</span>
+       <span><span class="swatch" style="background:rgb(120,130,145)"></span>≈ 100 (at avg)</span>
+       <span><span class="swatch" style="background:rgb(57,194,176)"></span>≥ 150 (above avg)</span>
+       <span class="muted">· hover any cell for detail</span>
+     </div>
+     <div style="overflow-x:auto">${heatmap()}</div>
+   </div>
+
+   <div class="grid2">
+     <div class="card">
+       <h2>Composite market potential — ${metricLabel()} share</h2>
+       <div class="desc">Country share of total scope potential across the 9 main categories (premium subsets excluded to avoid double‑count). This is how a top‑down scope target would split by country on potential alone.</div>
+       ${hbars(compArr.map(o=>({c:o.c,v:o.share})), r=>r.v, v=>fmt(v,1)+"%", r=>r.c===topC.c?"var(--accent)":"var(--accent2)")}
+     </div>
+     <div class="card">
+       <h2>Composite intensity — potential per household</h2>
+       <div class="desc">Same composite, but per household vs scope average = 100. Rich, AC‑heavy markets (Slovenia, Croatia) over‑index; large‑but‑lower‑income markets under‑index per household even when their absolute share is big.</div>
+       ${hbars([...compArr].sort((a,b)=>b.intensity-a.intensity).map(o=>({c:o.c,v:o.intensity})), r=>r.v, v=>fmt(v,0), r=>intColor(r.v))}
+     </div>
+   </div>
+
+   <div class="note">How to read together: a country can have a <b>large share</b> (big base) yet <b>low intensity</b> (weak buying power) — e.g. it deserves volume targets but lower €/household expectations. Use share for sizing the prize, intensity for judging performance fairly.</div>
+  `;
+}
+
+function renderCategory(){
+  const el=$("#tab-category");
+  const cat=CATS.find(c=>c.k===SELCAT);
+  const rows=R.cats[SELCAT].rows.map((r,i)=>({...r, aic:COUNTRIES[i].aic}));
+  const sorted=[...rows].sort((a,b)=>metricShare(b)-metricShare(a));
+  const maxShare=Math.max(...rows.map(metricShare));
+  const opts=CATS.map(c=>`<option value="${c.k}" ${c.k===SELCAT?"selected":""}>${c.grp} · ${c.name}</option>`).join("");
+  const drivers=[
+    ["Income elasticity β", cat.beta, cat.beta>1?"discretionary / premium":"necessity / saturated"],
+    ["Climate weight", cat.cw, cat.cw>0?"cooling demand ↑":cat.cw<0?"sunny ⇒ less need":"—"],
+    ["Tourism weight", cat.tw, cat.tw>0?"hospitality / coast":"—"],
+    ["Urban weight", cat.uw, cat.uw>0?"apartments / cities":"—"],
+    ["Demand base", cat.base==="comm"?"Commercial units":"Households", ""],
+    ["ASP income sensitivity", cat.aspSens, "premium mix vs buying power"],
+  ];
+  el.innerHTML=`
+   <div class="card">
+     <div class="row"><h2 style="margin:0">Category deep‑dive</h2><div class="spacer"></div>
+       <select id="catSel" style="min-width:280px">${opts}</select></div>
+     <div class="desc" style="margin-top:10px">${cat.name} — base ASP €${fmt(cat.asp)} · demand base: <b>${cat.base==="comm"?"commercial/services stock":"households"}</b>${cat.parent?` · modeled as a premium subset of <b>${catName(cat.parent)}</b>`:""}.</div>
+     <div class="grid3" style="margin-top:6px">
+       ${drivers.map(d=>`<div class="kpi"><div class="l">${d[0]}</div><div class="v" style="font-size:19px">${typeof d[1]==="number"?fmt(d[1],2):d[1]}</div><div class="s">${d[2]}</div></div>`).join("")}
+     </div>
+   </div>
+
+   <div class="grid2">
+     <div class="card">
+       <h2>${metricLabel()} potential share</h2>
+       <div class="desc">Share of the region's ${cat.name} potential. Use to split a scope target for this category.</div>
+       ${hbars(sorted.map(r=>({c:r.c,v:metricShare(r)})), r=>r.v, v=>fmt(v,1)+"%", r=>shareColor(r.v,maxShare))}
+     </div>
+     <div class="card">
+       <h2>Buying power vs potential intensity</h2>
+       <div class="desc">X = buying power (AIC). Y = potential per household (avg=100). Bubble = absolute € potential. The upward slope is the elasticity at work — steeper for discretionary categories.</div>
+       ${scatter()}
+     </div>
+   </div>
+
+   <div class="card">
+     <h2>Final table — ${cat.name}</h2>
+     <div class="desc">Per‑country potential for this category. <b>Intensity</b> is the fair‑share index (avg=100). Sortable.</div>
+     <div style="overflow-x:auto">${catTable(cat)}</div>
+   </div>
+  `;
+  $("#catSel").onchange=e=>{SELCAT=e.target.value; renderCategory();};
+  wireSort();
+}
+
+function catTable(cat){
+  const rows=R.cats[cat.k].rows.map((r,i)=>({...r, aic:COUNTRIES[i].aic, base:COUNTRIES[i].pop/COUNTRIES[i].hh}));
+  const sorted=[...rows].sort((a,b)=>metricShare(b)-metricShare(a));
+  const fcell=v=>`<td class="num" style="background:${facColor(v)}">${fmt(v,2)}×</td>`;
+  const hasShare=!!cat.share;
+  let body=sorted.map(r=>{
+    const ic=intColor(r.intensity);
+    return `<tr>
+      <td>${r.c} ${confBadge(r.conf)}</td>
+      <td class="num">${r.aic}</td>
+      <td class="num">${fmt(r.base,2)}M</td>
+      ${fcell(r.f.inc)}${fcell(r.f.cli)}${fcell(r.f.tour)}${fcell(r.f.urb)}${hasShare?fcell(r.f.share):''}
+      <td class="num">${units(r.units)}</td>
+      <td class="num">${fmt(r.shareVol,1)}%</td>
+      <td class="num">€${fmt(r.asp)}</td>
+      <td class="num">${eur(r.value)}</td>
+      <td class="num"><b>${fmt(r.shareVal,1)}%</b></td>
+      <td class="num"><span class="tag" style="background:${ic};color:${r.intensity>118?'#06231f':'#fff'}">${fmt(r.intensity)}</span></td>
+    </tr>`;}).join("");
+  let ci=0; const col=()=>ci++;
+  return `<table data-sortable><thead><tr>
+     <th data-col="${col()}">Country</th><th data-col="${col()}">AIC</th><th data-col="${col()}">${cat.base==='comm'?'Comm. base':'Households'}</th>
+     <th data-col="${col()}" title="Buying-power factor = (AIC/ref)^β">×Income</th>
+     <th data-col="${col()}" title="Climate factor = (CDD/ref)^cw">×Climate</th>
+     <th data-col="${col()}" title="Tourism factor">×Tour</th>
+     <th data-col="${col()}" title="Urbanisation factor">×Urban</th>
+     ${hasShare?`<th data-col="${col()}" title="Premium-subset / adoption share">×Share</th>`:''}
+     <th data-col="${col()}">Pot. units</th><th data-col="${col()}">Vol %</th><th data-col="${col()}">ASP €</th>
+     <th data-col="${col()}">Pot. value</th><th data-col="${col()}">Value %</th><th data-col="${col()}">Intensity</th>
+   </tr></thead><tbody>${body}</tbody></table>
+   <div class="legend" style="margin-top:8px"><span class="muted">Driver factors are multiplicative, each = 1.00× at the regional average. Base × Income × Climate × Tour × Urban${hasShare?' × Share':''} → potential. Cells warm (teal) above 1, cool (blue) below.</span></div>`;
+}
+
+function renderCountry(){
+  const el=$("#tab-country");
+  const opts=COUNTRIES.map(x=>`<option ${x.c===SELCOUNTRY?"selected":""}>${x.c}</option>`).join("");
+  const x=COUNTRIES.find(o=>o.c===SELCOUNTRY); const idx=COUNTRIES.indexOf(x);
+  const comp=R.comp[SELCOUNTRY];
+  const rows=CATS.map(c=>({k:c.k,name:c.name,grp:c.grp,parent:c.parent,base:c.base,...R.cats[c.k].rows[idx]}));
+  const main=rows.filter(r=>!r.parent&&r.base==="hh");   // residential, comparable per-household base
+  const strengths=[...main].sort((a,b)=>b.intensity-a.intensity);
+  el.innerHTML=`
+   <div class="card">
+     <div class="row"><h2 style="margin:0">Country profile</h2><div class="spacer"></div>
+       <select id="cSel" style="min-width:220px">${opts}</select></div>
+     <div class="grid3" style="margin-top:12px">
+       <div class="kpi"><div class="l">Buying power (AIC)</div><div class="v">${x.aic}</div><div class="s">EU27=100 · price level ${x.pli}</div></div>
+       <div class="kpi"><div class="l">Households</div><div class="v">${fmt(x.pop/x.hh,2)}M</div><div class="s">${x.pop}M pop · ${x.hh}/hh · ${x.urb}% urban</div></div>
+       <div class="kpi"><div class="l">Composite potential</div><div class="v">${fmt(comp.share,1)}%</div><div class="s">intensity ${fmt(comp.intensity)} (avg=100)</div></div>
+     </div>
+   </div>
+   <div class="grid2">
+     <div class="card">
+       <h2>Category intensity profile</h2>
+       <div class="desc">Where ${SELCOUNTRY} over‑ (outside dashed ring) or under‑indexes per household vs the region (=100).</div>
+       <div style="display:flex;justify-content:center">${radar()}</div>
+     </div>
+     <div class="card">
+       <h2>Strength ranking</h2>
+       <div class="desc">Categories where this country's per‑household potential is strongest. Targets should lean into high‑intensity categories.</div>
+       ${hbars(strengths.map(r=>({c:r.name,v:r.intensity})), r=>r.v, v=>fmt(v,0), r=>intColor(r.v))}
+     </div>
+   </div>
+   <div class="card">
+     <h2>All categories — ${SELCOUNTRY}</h2>
+     <div style="overflow-x:auto"><table><thead><tr><th>Category</th><th>Pot. units</th><th>Vol %</th><th>Pot. value</th><th>Value %</th><th>Intensity</th></tr></thead>
+     <tbody>${rows.map(r=>`<tr><td>${r.parent?'&nbsp;&nbsp;↳ ':''}${r.name}</td><td class="num">${units(r.units)}</td><td class="num">${fmt(r.shareVol,1)}%</td><td class="num">${eur(r.value)}</td><td class="num">${fmt(r.shareVal,1)}%</td><td class="num"><span class="tag" style="background:${intColor(r.intensity)};color:${r.intensity>118?'#06231f':'#fff'}">${fmt(r.intensity)}</span></td></tr>`).join("")}</tbody></table></div>
+   </div>
+  `;
+  $("#cSel").onchange=e=>{SELCOUNTRY=e.target.value; renderCountry();};
+}
+
+// diverging authority cell colour: 0 = grey (out of scope), 1 = teal (full mandate)
+function authColor(v){ return mix([45,53,64],[57,194,176],Math.max(0,Math.min(1,v))); }
+
+function renderAuthority(){
+  const el=$("#tab-authority");
+  const mk=MAIN_KEYS();
+  // editable matrix: rows = country, cols = main category
+  const head=`<tr><th style="text-align:left">Country</th>${mk.map(k=>`<th title="${catName(k)}">${k.toUpperCase()}</th>`).join("")}<th>In‑scope €</th></tr>`;
+  const body=COUNTRIES.map(x=>{
+    const inScope=mk.reduce((s,k)=>s+R.cats[k].rows.find(r=>r.c===x.c).value*authOf(k,x.c),0);
+    return `<tr><td style="text-align:left">${x.c}</td>${mk.map(k=>{
+      const v=authOf(k,x.c);
+      return `<td class="num" style="background:${authColor(v)}"><input class="editbox" style="width:52px;background:transparent;border:0;text-align:center;color:${v>0.5?'#06231f':'#fff'}" data-ak="${k}" data-ac="${x.c}" value="${v}"></td>`;
+    }).join("")}<td class="num">${eur(inScope)}</td></tr>`;
+  }).join("");
+
+  // neutral vs strategy-weighted composite share
+  const neutral=Object.entries(R.comp).map(([c,o])=>({c,v:o.share}));
+  const strat=Object.entries(R.comp2).map(([c,o])=>({c,v:o.share}));
+  const sMap=Object.fromEntries(strat.map(o=>[o.c,o.v]));
+  const paired=neutral.map(o=>({c:o.c, neutral:o.v, strat:sMap[o.c], delta:sMap[o.c]-o.v}))
+                      .sort((a,b)=>b.strat-a.strat);
+
+  el.innerHTML=`
+   <div class="card">
+     <div class="flex-head"><div>
+       <h2>Product‑authority matrix</h2>
+       <div class="desc">Set how much mandate each office has over each category: <b>1 = full authority</b>, <b>0 = not your scope</b> (excluded from your strategy view &amp; optional target split), decimals for partial/shared authority. This is the <b>strategy layer</b> — deliberately separate from the neutral demand model, so a country never looks attractive just because someone up‑weighted a category. Premium subsets (OLED, multi‑door) inherit their parent's authority.</div>
+     </div>
+     <div class="row"><button class="btn ghost" id="authFull">Set all = 1</button><button class="btn ghost" id="authClear">Clear all = 0</button></div>
+     </div>
+     <div style="overflow-x:auto"><table>${head}${body}</table></div>
+     <div class="legend" style="margin-top:8px"><span><span class="swatch" style="background:${authColor(0)}"></span>0 · out of scope</span><span><span class="swatch" style="background:${authColor(1)}"></span>1 · full mandate</span><span class="muted">· “In‑scope €” = authority‑weighted total potential you're mandated to chase.</span></div>
+   </div>
+
+   <div class="grid2">
+     <div class="card">
+       <h2>Neutral demand vs authority‑weighted priority</h2>
+       <div class="desc">How weighting by your category mandate shifts each country's share of the prize. Teal = authority‑weighted (strategy); grey = pure demand.</div>
+       ${pairedBars(paired)}
+     </div>
+     <div class="card">
+       <h2>Priority shift (Δ share, pts)</h2>
+       <div class="desc">Countries that rise (green) or fall (red) once your authority matrix is applied — i.e. where your mandate concentrates the opportunity.</div>
+       ${hbars([...paired].sort((a,b)=>b.delta-a.delta).map(o=>({c:o.c,v:o.delta})), r=>r.v, v=>(v>=0?"+":"")+fmt(v,1), r=>r.v>=0?"var(--good)":"var(--bad)")}
+     </div>
+   </div>
+   <div class="note">The authority‑weighted composite is what feeds an office scorecard and (optionally) the target split in <b>Targets &amp; performance</b>. Phase 2: this same grid becomes the bridge to the RPI — retailer sell‑through is measured only within the categories an office actually has authority over.</div>
+  `;
+  $$("[data-ak]").forEach(inp=>inp.onchange=e=>{
+    const k=e.target.dataset.ak, c=e.target.dataset.ac; let v=parseFloat(e.target.value);
+    if(isNaN(v)) v=1; v=Math.max(0,Math.min(1,v)); AUTH[k][c]=v; recompute(); renderAuthority();
+  });
+  $("#authFull").onclick=()=>{MAIN_KEYS().forEach(k=>COUNTRIES.forEach(x=>AUTH[k][x.c]=1)); recompute(); renderAuthority();};
+  $("#authClear").onclick=()=>{MAIN_KEYS().forEach(k=>COUNTRIES.forEach(x=>AUTH[k][x.c]=0)); recompute(); renderAuthority();};
+}
+
+// grouped horizontal bars for two series (neutral vs strategy)
+function pairedBars(rows){
+  const max=Math.max(...rows.map(r=>Math.max(r.neutral,r.strat)))||1;
+  const rh=34, left=128, w=1040, h=rows.length*rh+10;
+  let s="";
+  rows.forEach((r,i)=>{
+    s+=`<text x="${left-8}" y="${i*rh+20}" text-anchor="end" font-size="11.5">${r.c}</text>`;
+    const bwN=(w-left-90)*r.neutral/max, bwS=(w-left-90)*r.strat/max;
+    s+=`<rect x="${left}" y="${i*rh+4}" width="${Math.max(2,bwS)}" height="11" rx="2.5" fill="var(--accent)"><title>strategy ${fmt(r.strat,1)}%</title></rect>`;
+    s+=`<rect x="${left}" y="${i*rh+17}" width="${Math.max(2,bwN)}" height="11" rx="2.5" fill="var(--mut2)"><title>neutral ${fmt(r.neutral,1)}%</title></rect>`;
+    s+=`<text x="${left+Math.max(bwS,bwN)+6}" y="${i*rh+20}" font-size="11" fill="var(--mut)">${fmt(r.strat,1)}% / ${fmt(r.neutral,1)}%</text>`;
+  });
+  s=`<g><text x="${left}" y="-2" font-size="0"> </text></g>`+s;
+  return svg(w,h+6,s);
+}
+
+function renderPerf(){
+  const el=$("#tab-perf");
+  const cat=CATS.find(c=>c.k===SELCAT);
+  const opts=CATS.map(c=>`<option value="${c.k}" ${c.k===SELCAT?"selected":""}>${c.grp} · ${c.name}</option>`).join("");
+  const rows=R.cats[SELCAT].rows;
+  const target=TARGETS[SELCAT]||0;
+  const act=ACTUALS[SELCAT]||{};
+  const sumAct=COUNTRIES.reduce((s,x)=>s+(+act[x.c]||0),0);
+  const chip=(v)=>{const pc=v>=110?"var(--good)":v>=90?"var(--warn)":"var(--bad)"; return `<span class="tag" style="background:${pc};color:#06231f">${fmt(v)}</span>`;};
+  // authority-weighted split: renormalise potential share by each country's authority for this category
+  const authDenom=rows.reduce((s,r)=>s+metricShare(r)*authOf(SELCAT,r.c),0)||1;
+  let body=rows.map((r,i)=>{
+    const ctry=r.c;
+    const potShare=metricShare(r);
+    const aw=authOf(SELCAT,ctry);
+    const allocShare=AUTHW?100*metricShare(r)*aw/authDenom:potShare;
+    const absPot=METRIC==="val"?r.value:r.units;     // model's absolute potential for this country (calibrated by total scope size)
+    const alloc=target*allocShare/100;
+    const a=+act[ctry]||0;
+    const actShare=sumAct>0?100*a/sumAct:0;
+    const perfRel=sumAct>0&&potShare>0?100*actShare/potShare:null;   // share-ratio (zero-sum)
+    const perfAbs=a>0&&absPot>0?100*a/absPot:null;                    // absolute (non-zero-sum)
+    const thin=potShare<2||r.conf==="L";
+    return `<tr>
+      <td>${ctry} ${confBadge(r.conf)}${thin?' <span class="pill" style="border-color:var(--mut2);color:var(--mut)" title="Small base / low data confidence — performance is statistically noisy">thin</span>':''}</td>
+      <td class="num">${fmt(potShare,1)}%</td>
+      <td class="num">${METRIC==="val"?eur(absPot):units(absPot)}</td>
+      <td class="num">${target>0?(METRIC==="val"?eur(alloc):units(alloc)):"—"}</td>
+      <td class="num"><input class="editbox" data-act="${ctry}" value="${a||""}" placeholder="0"></td>
+      <td class="num">${perfRel==null?"—":chip(perfRel)}</td>
+      <td class="num">${perfAbs==null?"—":chip(perfAbs)}</td>
+    </tr>`;
+  }).join("");
+  // ranking of performance (absolute index — non-zero-sum, the headline)
+  const perfArr=rows.map(r=>{const a=+act[r.c]||0; const ap=METRIC==="val"?r.value:r.units; return {c:r.c,perf:a>0&&ap>0?100*a/ap:null};}).filter(o=>o.perf!=null).sort((a,b)=>b.perf-a.perf);
+  el.innerHTML=`
+   <div class="card">
+     <div class="row"><h2 style="margin:0">Targets &amp; performance</h2><div class="spacer"></div>
+       <select id="pSel" style="min-width:280px">${opts}</select></div>
+     <div class="desc" style="margin-top:10px">This is the engine's payoff. Enter a <b>total scope target</b> → it splits by potential share = a fair, buying‑power‑adjusted target per country. Paste <b>actual sales</b> (same metric: ${metricLabel()}) → two performance scores, 100 = exactly at potential:
+       <b>Perf‑abs</b> = actual ÷ this country's own absolute potential (<i>non‑zero‑sum</i> — one office's result never moves another's; this is the headline for cross‑office comparison).
+       <b>Perf‑rel</b> = actual share ÷ potential share (zero‑sum within the scope; useful for "who is capturing more than their fair slice", but a neighbour over‑shipping depresses everyone else).
+       <span class="muted">“thin” flags small‑base / low‑confidence markets where the score is statistically noisy.</span></div>
+     <div class="row" style="margin-top:12px">
+       <label class="muted">Total scope ${METRIC==="val"?"€ target":"unit target"} for ${cat.name}:</label>
+       <input type="number" id="targetIn" class="editbox" style="width:140px" value="${target||""}" placeholder="e.g. ${METRIC==="val"?"50000000":"120000"}">
+       <label class="muted small" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="authwChk" ${AUTHW?"checked":""}> weight split by authority</label>
+       <span class="spacer"></span>
+       <span class="muted small">Actuals entered: ${METRIC==="val"?eur(sumAct):units(sumAct)}</span>
+     </div>
+   </div>
+
+   <div class="grid2">
+     <div class="card">
+       <h2>Allocation &amp; performance table</h2>
+       <div style="overflow-x:auto"><table><thead><tr>
+         <th>Country</th><th>Pot. share</th><th>Abs. potential</th><th>Fair target</th><th>Actual (${METRIC==="val"?"€":"u"})</th><th title="actual share ÷ potential share">Perf‑rel</th><th title="actual ÷ own absolute potential">Perf‑abs</th>
+       </tr></thead><tbody>${body}</tbody></table></div>
+       <div class="note">Performance strips out market size and wealth: a small rich market at 130 is genuinely beating its potential; a big market at 80 is leaving money on the table even if its absolute sales are larger. Calibrate <b>Abs. potential</b> by setting the realistic total annual market size for this category in <b>Assumptions</b> — that anchors absolute scores to reality (and implicitly captures replacement/saturation).</div>
+     </div>
+     <div class="card">
+       <h2>Performance ranking</h2>
+       <div class="desc">${perfArr.length?"Actual vs potential, this category. Above 100 = beating fair share.":"Enter actual sales on the left to rank performance."}</div>
+       ${perfArr.length?hbars(perfArr.map(o=>({c:o.c,v:o.perf})), r=>r.v, v=>fmt(v,0), r=>r.v>=110?"var(--good)":r.v>=90?"var(--warn)":"var(--bad)"):'<div class="muted small" style="padding:20px 0">No actuals yet.</div>'}
+       <div class="note" style="margin-top:14px">Cross‑office comparison: run the same for every category, then average each office's performance indices weighted by category potential to get an office scorecard that's already normalised for the markets they cover.</div>
+     </div>
+   </div>
+  `;
+  $("#pSel").onchange=e=>{SELCAT=e.target.value; renderPerf();};
+  $("#targetIn").onchange=e=>{TARGETS[SELCAT]=+e.target.value||0; renderPerf();};
+  $("#authwChk").onchange=e=>{AUTHW=e.target.checked; renderPerf();};
+  $$("[data-act]").forEach(inp=>inp.onchange=e=>{
+    ACTUALS[SELCAT]=ACTUALS[SELCAT]||{}; ACTUALS[SELCAT][e.target.dataset.act]=+e.target.value||0; renderPerf();
+  });
+}
+
+function renderAssum(){
+  const el=$("#tab-assum");
+  const ctry=COUNTRIES.map((x,i)=>`<tr>
+     <td>${x.c} ${confBadge(x.conf)}</td>
+     ${["pop","hh","aic","pli","urb","cdd","tour","comm"].map(f=>`<td class="num"><input class="editbox" data-c="${i}" data-f="${f}" value="${x[f]}"></td>`).join("")}
+   </tr>`).join("");
+  const cat=CATS.map((c,i)=>`<tr>
+     <td>${c.name}</td><td class="num">${c.base}</td>
+     ${["beta","cw","tw","uw","aspSens","asp","total"].map(f=>`<td class="num">${c[f]===undefined?'—':`<input class="editbox" data-ci="${i}" data-cf="${f}" value="${c[f]}">`}</td>`).join("")}
+   </tr>`).join("");
+  el.innerHTML=`
+   <div class="card">
+     <h2>Methodology — how the index is built</h2>
+     <div class="desc">Fully transparent, no black box. Every number below is editable; the whole dashboard recomputes live.</div>
+     <div style="font-size:13px;line-height:1.7">
+       <p><b>1 · Demand base.</b> Who buys: <b>households</b> for domestic appliances (a fridge is bought per home, not per person), a <b>commercial/services building base</b> for professional System AC. Households = population ÷ average household size — this alone reshuffles rankings (Kosovo's 5.1‑person households mean far fewer buying units than its population suggests).</p>
+       <p><b>2 · Buying‑power adjustment.</b> The core of your insight. We use <b>Actual Individual Consumption per capita in PPS</b> (what households really consume, purchasing‑power‑adjusted — better than GDP for transfer/remittance economies like Kosovo/BiH) raised to a category <b>income elasticity β</b>. Necessities (washing machines, basic fridges, vacuums, microwaves, mainstream TV) get β≈0.35–0.5: everyone owns one, so wealth barely changes the unit count. Discretionary/premium (dishwashers, dryers, AC) get β≈1.2–1.3: adoption climbs steeply with income. This is why €/inhabitant isn't comparable across Croatia, Slovenia, Serbia.</p>
+       <p><b>3 · Structural &amp; environmental drivers.</b> Cooling‑degree‑days drive air conditioning (Albania, Croatia coast, Montenegro, Bulgaria run hot; Slovenia/Bosnia are alpine‑cool). Tourism intensity drives System AC (hotels) and coastal Room AC (Croatia, Montenegro). Urbanisation drives dishwashers and apartment‑format products. Dryers carry a <i>negative</i> climate weight — sunny markets line‑dry and skip the dryer.</p>
+       <p><b>4 · Premium subsets (no double‑count).</b> OLED (of TV) and multi‑door (of fridges) are carved from the parent via an income‑scaling logistic share — and they carry the parent's low β so income is applied <i>once</i>, not twice. They're shown separately for premium‑mix targets and are excluded from the parent's composite so no unit is counted twice. Combo washer‑dryers sit inside the dryer line.</p>
+       <p><b>5 · Value vs volume.</b> Value = units × ASP, where ASP = base × (AIC/ref)^aspSens (within‑tier quality ladder, kept small for parents since mix is already in the premium lines) × (PLI/ref)^0.5 (local price level). So value potential diverges more than unit potential — matching reality.</p>
+       <p><b>6 · Outputs.</b> <b>Share %</b> (split a target), <b>Intensity index</b> (per‑household, scope unweighted‑mean = 100 by construction — judge performance fairly), <b>absolute units/€</b> (size the prize, calibrated by your real market totals), <b>Perf‑abs</b> (actual ÷ own potential, non‑zero‑sum) and <b>Perf‑rel</b> (share ratio).</p>
+     </div>
+     <div class="note">Formula: <code>RAW_vol = base × (AIC/AICᵣ)^β × (CDD/CDDᵣ)^cw × (TOUR/TOURᵣ)^tw × (URB/URBᵣ)^uw × share</code>, references = scope means. <b>Shares &amp; intensity are reference‑invariant</b> (the reference is a common constant that cancels in normalisation), so the choice of reference doesn't bias the comparison. Read this as <b>structural (stock‑equilibrium) potential</b>: it tells you the relative <i>size and richness</i> of each market, not a units forecast — anchor the absolute scale by entering real annual market totals per category below, which folds in replacement &amp; saturation.</div>
+   </div>
+
+   <div class="card">
+     <h2>Country inputs <span class="muted small">(editable — recomputes live)</span></h2>
+     <div style="overflow-x:auto"><table><thead><tr><th>Country</th><th>Pop (M)</th><th>HH size</th><th>AIC</th><th>PLI</th><th>Urban %</th><th>CDD</th><th>Tour/cap</th><th>Comm idx</th></tr></thead><tbody>${ctry}</tbody></table></div>
+   </div>
+
+   <div class="card">
+     <h2>Category parameters <span class="muted small">(editable)</span></h2>
+     <div class="desc">β = income elasticity · cw/tw/uw = climate/tourism/urban exponents · aspSens = how strongly premium mix rises with income · total = indicative annual scope units.</div>
+     <div style="overflow-x:auto"><table><thead><tr><th>Category</th><th>Base</th><th>β</th><th>Climate</th><th>Tourism</th><th>Urban</th><th>ASP sens</th><th>ASP €</th><th>Scope units</th></tr></thead><tbody>${cat}</tbody></table></div>
+     <div class="row" style="margin-top:12px"><button class="btn ghost" id="resetBtn">↺ Reset to defaults</button></div>
+   </div>
+
+   <div class="card">
+     <h2>Phase‑2 roadmap — what makes it sharper</h2>
+     <div class="grid2">
+       <div>
+         <div class="muted small" style="text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Your planned layers</div>
+         <ul style="margin:0;padding-left:18px;line-height:1.7;font-size:13px">
+           <li><b>Product‑authority matrix</b> — weight categories per country to build the strategy‑weighted composite (kept separate from the neutral demand composite, so attractiveness from real potential ≠ attractiveness from priority).</li>
+           <li><b>RPI (Retailer Potential Index)</b> — sell‑through potential per retailer; nests under each country's MPI to measure retailer &amp; office execution.</li>
+           <li><b>Targets &amp; actuals</b> — already wired in the Performance tab; pasting a full year of actuals doubles as a calibration backtest (systematic over/under across categories reveals β to re‑tune).</li>
+         </ul>
+       </div>
+       <div>
+         <div class="muted small" style="text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Drivers to add (flagged by review)</div>
+         <ul style="margin:0;padding-left:18px;line-height:1.7;font-size:13px">
+           <li><b>Grey / cross‑border imports</b> — critical for small border markets (Kosovo, Montenegro, N. Macedonia, BiH buy in Serbia/Italy/Greece); net‑catchment adjustment so an office isn't punished for demand that leaked to a neighbour.</li>
+           <li><b>Installed‑base age / replacement waves</b> — turns stock potential into an annual flow (new + replacement + upgrade).</li>
+           <li><b>Electricity price &amp; EU energy‑label regime</b> — gates AC/dryer run‑cost and premium mix.</li>
+           <li><b>FX / affordability shocks</b> — for non‑euro markets (HUF, RSD, denar, lek); per‑country ASP from your invoices; e‑commerce attribution.</li>
+           <li><b>Housing</b> — new‑build first‑fit, coastal second homes (split from hotel tourism), apartment vs detached.</li>
+         </ul>
+       </div>
+     </div>
+   </div>
+
+   <div class="card">
+     <h2>Data sources &amp; caveats</h2>
+     <div class="desc" style="line-height:1.7">
+       Inputs are recent real figures for framework validation — <b>Eurostat 2024 first estimates</b> (AIC &amp; GDP in PPS, comparative price levels, household size), <b>2021–2024 national censuses</b> (population, households: Kosovo 2024, Serbia 2022, Montenegro 2023, Albania 2023, N. Macedonia 2021), <b>World Bank</b> (GDP‑PPP, urbanisation), Eurostat/EEA &amp; meteorological offices (cooling‑degree‑days), national tourism boards (overnight stays). The <b>confidence badge</b> per country flags reliability — non‑EU Western‑Balkan states (esp. Kosovo: not in the Eurostat PPP project, AIC estimated) carry more uncertainty. <b>Replace with your internal market data</b> (GfK/Euromonitor panels, retail sell‑out, your own shipments, invoice‑level ASP) and real annual market sizes as they arrive. The model is a <b>relative structural</b> potential index, not an absolute forecast — its job is to make cross‑country comparison fair.
+     </div>
+   </div>
+  `;
+  $$("[data-c]").forEach(inp=>inp.onchange=e=>{COUNTRIES[+e.target.dataset.c][e.target.dataset.f]=+e.target.value; recompute(); renderAll();});
+  $$("[data-ci]").forEach(inp=>inp.onchange=e=>{CATS[+e.target.dataset.ci][e.target.dataset.cf]=+e.target.value; recompute(); renderAll();});
+  $("#resetBtn").onclick=()=>location.reload();
+}
+
+// ---- TABLE SORTING --------------------------------------------------------
+function wireSort(){
+  $$("table[data-sortable]").forEach(t=>{
+    $$("thead th",t).forEach(th=>{
+      th.onclick=()=>{
+        const col=+th.dataset.col, tb=$("tbody",t), rows=[...tb.rows];
+        const asc=th.dataset.asc!=="1"; th.dataset.asc=asc?"1":"0";
+        rows.sort((a,b)=>{
+          const pa=parseFloat(a.cells[col].innerText.replace(/[^0-9.\-]/g,""))||a.cells[col].innerText;
+          const pb=parseFloat(b.cells[col].innerText.replace(/[^0-9.\-]/g,""))||b.cells[col].innerText;
+          return (pa>pb?1:pa<pb?-1:0)*(asc?1:-1);
+        });
+        rows.forEach(r=>tb.appendChild(r));
+      };
+    });
+  });
+}
+
+// ---- EXPORT ---------------------------------------------------------------
+function exportCSV(){
+  const head=["Country","Conf","Category","Group","Subset_of","Base_type","Base_M",
+    "f_Income","f_Climate","f_Tourism","f_Urban","f_Share",
+    "Potential_units","Vol_share_%","ASP_eur","Potential_value_eur","Value_share_%","Intensity_index",
+    "Authority","In_scope_value_eur"];
+  let lines=[head.join(",")];
+  CATS.forEach(c=>{
+    R.cats[c.k].rows.forEach((r,i)=>{
+      const auth=authOf(c.k,r.c);
+      lines.push([`"${r.c}"`,r.conf,`"${c.name}"`,c.grp,c.parent||"",c.base,r.base.toFixed(3),
+        r.f.inc.toFixed(3),r.f.cli.toFixed(3),r.f.tour.toFixed(3),r.f.urb.toFixed(3),r.f.share.toFixed(3),
+        Math.round(r.units),r.shareVol.toFixed(2),Math.round(r.asp),Math.round(r.value),r.shareVal.toFixed(2),r.intensity.toFixed(1),
+        auth.toFixed(2),Math.round(r.value*auth)].join(","));
+    });
+  });
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MPI_master_table.csv"; a.click();
+}
+
+// ---- ROUTING --------------------------------------------------------------
+let TAB="overview";
+function renderAll(){
+  renderScope();
+  if(TAB==="overview")renderOverview();
+  if(TAB==="category")renderCategory();
+  if(TAB==="country")renderCountry();
+  if(TAB==="authority")renderAuthority();
+  if(TAB==="perf")renderPerf();
+  if(TAB==="assum")renderAssum();
+  $("#footer").innerHTML=`MPI Phase 1 · ${COUNTRIES.length} markets × ${CATS.length} category lines · dependency‑free, runs offline · indicative data — replace with internal market figures. Reference (pop‑weighted): AIC ${fmt(R.REF.aic,1)} · CDD ${fmt(R.REF.cdd)} · Tour ${fmt(R.REF.tour,1)} · Urban ${fmt(R.REF.urb)}%.`;
+}
+function showTab(t){
+  TAB=t;
+  $$("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  ["overview","category","country","authority","perf","assum"].forEach(x=>$("#tab-"+x).style.display=x===t?"block":"none");
+  renderAll();
+}
+$$("#tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+$$("#metricSeg button").forEach(b=>b.onclick=()=>{METRIC=b.dataset.m; $$("#metricSeg button").forEach(x=>x.classList.toggle("on",x===b)); renderAll();});
+$("#exportBtn").onclick=exportCSV;
+
+// ---- INIT -----------------------------------------------------------------
+recompute();
+showTab("overview");
+</script>
+</body>
+</html>
