@@ -252,6 +252,36 @@ const REAL_RET={
   {a:"btob",   n:"Frigo-kor (Samsung clima)",rev:12.0,ce:1.00,cf:"L"},
   {a:"btob",   n:"Elektromeh. Toma (LG)",rev:8.0,  ce:1.00, cf:"L"},
  ],
+ // Slovenia sources: Delo/AJPES TOP-300 (SPIRIT Slovenia PDFs) + companywall/ebonitete research
+ // (see Slovenia_Top300_Analysis.xlsx, 'RPI Slovenia retailers'). Note: Mercator's M Tehnika chain closed end-2024.
+ "Slovenia":[
+  {a:"electro",n:"Big Bang",             rev:154.1,ce:0.97, cf:"H"},
+  {a:"electro",n:"Harvey Norman",        rev:99.3, ce:0.45, cf:"M"},
+  {a:"ecom",   n:"Mimovrste",            rev:107.5,ce:0.55, cf:"M"},
+  {a:"ecom",   n:"enaA (Gambit)",        rev:14.8, ce:0.70, cf:"M"},
+  {a:"mass",   n:"Mercator (M Tehnika closed)",rev:1350.0,ce:0.005,cf:"L"},
+  {a:"mass",   n:"Spar Slovenija",       rev:1174.1,ce:0.015,cf:"L"},
+  {a:"mass",   n:"Hofer",                rev:682.0,ce:0.02, cf:"L"},
+  {a:"mass",   n:"Lidl Slovenija",       rev:677.7,ce:0.025,cf:"L"},
+  {a:"mass",   n:"Tuš (Engrotuš)",       rev:541.4,ce:0.015,cf:"L"},
+  {a:"mass",   n:"Jagros (Jager)",       rev:241.1,ce:0.06, cf:"M"},
+  {a:"mass",   n:"E.Leclerc (Rudnidis)", rev:84.6, ce:0.02, cf:"L"},
+  {a:"kitchen",n:"Lesnina XXXL (LES-MMS)",rev:132.2,ce:0.075,cf:"M"},
+  {a:"kitchen",n:"IKEA Slovenija",       rev:88.1, ce:0.045,cf:"M"},
+  {a:"kitchen",n:"Momax",                rev:30.0, ce:0.05, cf:"L"},
+  {a:"diy",    n:"Merkur",               rev:249.2,ce:0.10, cf:"M"},
+  {a:"diy",    n:"Bauhaus Slovenija",    rev:117.3,ce:0.045,cf:"M"},
+  {a:"diy",    n:"OBI Slovenija",        rev:65.8, ce:0.04, cf:"L"},
+  {a:"btob",   n:"Vitanest (Mitsubishi El.)",rev:35.5,ce:1.00,cf:"H"},
+  {a:"btob",   n:"Airabela (Daikin)",    rev:17.0, ce:1.00, cf:"H"},
+  {a:"btob",   n:"Tratnjek (Samsung DVM)",rev:10.3,ce:1.00, cf:"H"},
+  {a:"btob",   n:"Atlas Trading (Gree)", rev:10.5, ce:1.00, cf:"H"},
+  {a:"btob",   n:"Dines (LG/Fujitsu)",   rev:8.2,  ce:1.00, cf:"M"},
+  {a:"btob",   n:"E2E (Daikin/Rotex)",   rev:5.3,  ce:1.00, cf:"M"},
+  {a:"btob",   n:"Iblo (LG Multi V)",    rev:5.2,  ce:1.00, cf:"M"},
+  {a:"btob",   n:"Experto Int. (Toshiba)",rev:2.2, ce:1.00, cf:"M"},
+  {a:"btob",   n:"Procool (Daikin VRV agent)",rev:0.9,ce:1.00,cf:"L"},
+ ],
 };
 const retReach=(r)=> r.rev!=null ? r.rev*r.ce*(r.loc!=null?r.loc:1) : r.weight;
 function initRET(){
@@ -777,8 +807,8 @@ function renderRPI(){
        <select id="rcSel" style="min-width:200px">${opts}</select>
        <button class="btn ghost" id="rpiExport">⬇ Retailer CSV</button></div>
      <div class="desc" style="margin-top:10px">Each country's authority‑weighted category potential is distributed across its retail landscape by <b>channel reach × category fit</b> — so a specialist owns TV/OLED, a kitchen studio owns dishwashers, an HVAC distributor owns System AC. That gives each retailer a <b>fair‑share potential</b>; enter <b>actual sell‑through</b> (${mlabel}) to score it (actual ÷ potential × 100), and see <b>whitespace</b> — potential sitting in retailers you're not active in.
-     ${SELRC==="Croatia"
-       ?'<b>Croatia is populated with 29 real retailers/channel players</b> — reach = FINA top‑1500 revenue × estimated CE‑relevant share (H/M/L badge = data confidence; sources &amp; reasoning in <i>Croatia_Top1500_Analysis.xlsx</i>). Distributors (M SAN, ALSO, Microline…) are excluded to avoid double‑counting sell‑through. Cross‑border e‑tail (Amazon/Temu) and LG installer networks are invisible to FINA rankings.'
+     ${REAL_RET[SELRC]
+       ?`<b>${SELRC} is populated with ${REAL_RET[SELRC].length} real retailers/channel players</b> — reach = registry revenue × CE‑share × local‑share (H/M/L badge = data confidence; sources &amp; reasoning in <i>${SELRC==="Croatia"?"Croatia_Top1500_Analysis.xlsx":"Slovenia_Top300_Analysis.xlsx"}</i>). Pure distributors and manufacturers are excluded to avoid double‑counting sell‑through; cross‑border e‑tail (Amazon/Temu) is invisible to local rankings.`
        :'Retailers for this country are a <b>SAMPLE template by channel archetype</b> — rename them to your real accounts and set each one\'s reach.'}</div>
      <div class="kpis" style="margin-top:6px;grid-template-columns:repeat(4,1fr)">
        <div class="kpi"><div class="l">${SELRC} in‑scope potential</div><div class="v">${fmtPot(R2.totPot)}</div><div class="s">${rets.length} retailers · ${metricLabel()}</div></div>
