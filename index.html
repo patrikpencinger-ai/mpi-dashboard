@@ -211,13 +211,53 @@ const ARCHE = {
   btob:   {name:"B2B / HVAC project",     fit:{tv:0,  ref:0.1,wm:0.1,dryer:0.1,dw:0.1,mw:0,  vac:0,  rac:0.5,sac:1.5}},
 };
 const ARCH_W = {electro:1.0, mass:1.3, ecom:1.1, kitchen:0.4, diy:0.6, btob:0.7}; // default within-country reach
-let RET=[];            // retailer registry [{id,country,arch,name,weight}]
+let RET=[];            // retailer registry [{id,country,arch,name,weight,conf?}]
 let RETACT={};         // {retailerId: actual sell-through, in current METRIC}
 let SELRC="Croatia";   // selected country for the RPI tab
+// CROATIA: real retailers. weight = CE/appliance-relevant revenue (EUR M) = FINA top-1500 revenue × CE-share estimate.
+// Sources: Jutarnji/Hanza-FINA TOP-1500 FY2025 + fininfo/companywall research (see Croatia_Top1500_Analysis.xlsx, 'RPI Croatia retailers').
+// conf: H = revenue reported + share solid; M = share inferred; L = size or share estimated.
+// Distributors (M SAN, Microline, ALSO, Makromikro, Mobis, Smart Trade, Samsung branch) excluded — indirect tier, would double-count sell-through.
+const CRO_RET=[
+  {a:"electro",n:"Sancta Domenica",      w:162,  cf:"H"},
+  {a:"electro",n:"Elipso (E PLUS)",      w:141,  cf:"H"},
+  {a:"electro",n:"Tehno-mag",            w:80,   cf:"H"},
+  {a:"electro",n:"Svijet medija",        w:53,   cf:"H"},
+  {a:"electro",n:"Links",                w:41,   cf:"H"},
+  {a:"electro",n:"Harvey Norman",        w:25,   cf:"M"},
+  {a:"electro",n:"HGSpot",               w:30,   cf:"H"},
+  {a:"electro",n:"Instar Informatika",   w:26,   cf:"H"},
+  {a:"electro",n:"Centar tehnike",       w:25,   cf:"H"},
+  {a:"electro",n:"Vinkoprom",            w:14,   cf:"M"},
+  {a:"electro",n:"Chipoteka (Z-EL)",     w:11,   cf:"M"},
+  {a:"ecom",   n:"eKupi",                w:41,   cf:"M"},
+  {a:"ecom",   n:"Mall.hr",              w:18,   cf:"L"},
+  {a:"mass",   n:"Konzum (tehnika promo)",w:39,  cf:"L"},
+  {a:"mass",   n:"Lidl (promo weeks)",   w:43,   cf:"L"},
+  {a:"mass",   n:"Kaufland",             w:18,   cf:"L"},
+  {a:"mass",   n:"Metro C&C",            w:17,   cf:"M"},
+  {a:"mass",   n:"KTC",                  w:15,   cf:"M"},
+  {a:"kitchen",n:"Emmezeta (FLIBA)",     w:32,   cf:"M"},
+  {a:"kitchen",n:"MMM Agramservis",      w:27,   cf:"L"},
+  {a:"kitchen",n:"Lesnina XXXL",         w:14,   cf:"M"},
+  {a:"kitchen",n:"IKEA Hrvatska",        w:7.5,  cf:"M"},
+  {a:"diy",    n:"Pevex",                w:46,   cf:"M"},
+  {a:"diy",    n:"Bauhaus",              w:12,   cf:"M"},
+  {a:"btob",   n:"Deltron (Mitsubishi+Gree)",w:94,cf:"H"},
+  {a:"btob",   n:"Daikin Hrvatska",      w:34,   cf:"H"},
+  {a:"btob",   n:"Veka-ing (Toshiba/ME)",w:15,   cf:"L"},
+  {a:"btob",   n:"Frigo-kor (Samsung clima)",w:12,cf:"L"},
+  {a:"btob",   n:"Elektromeh. Toma (LG)",w:8,    cf:"L"},
+];
 function initRET(){
   if(RET.length) return;
-  COUNTRIES.forEach(x=>Object.keys(ARCHE).forEach(a=>
-    RET.push({id:x.c+"|"+a, country:x.c, arch:a, name:ARCHE[a].name, weight:ARCH_W[a]})));
+  COUNTRIES.forEach(x=>{
+    if(x.c==="Croatia"){
+      CRO_RET.forEach((r,i)=>RET.push({id:"Croatia|"+i+"|"+r.a, country:"Croatia", arch:r.a, name:r.n, weight:r.w, conf:r.cf}));
+    } else {
+      Object.keys(ARCHE).forEach(a=>RET.push({id:x.c+"|"+a, country:x.c, arch:a, name:ARCHE[a].name, weight:ARCH_W[a]}));
+    }
+  });
 }
 // Distribute a country's authority-weighted category potential across its retailers (reach × channel fit).
 function computeRPI(country){
@@ -691,7 +731,7 @@ function renderRPI(){
     const perfChip=r.perf==null?'<span class="muted">—</span>':`<span class="tag" style="background:${r.perf>=110?'var(--good)':r.perf>=90?'var(--warn)':'var(--bad)'};color:#06231f">${fmt(r.perf)}</span>`;
     return `<tr>
       <td><input class="editbox" style="width:150px;text-align:left" data-rid="${r.id}" data-rf="name" value="${r.name}"></td>
-      <td class="muted small">${ARCHE[r.arch].name}</td>
+      <td class="muted small">${ARCHE[r.arch].name}${r.conf?' '+confBadge(r.conf):''}</td>
       <td class="num"><input class="editbox" style="width:56px" data-rid="${r.id}" data-rf="weight" value="${r.weight}"></td>
       <td class="num">${fmtPot(r.pot)}</td>
       <td class="num">${fmt(METRIC==="val"?r.shareVal:r.shareUnits,1)}%</td>
@@ -722,7 +762,10 @@ function renderRPI(){
      <div class="row"><h2 style="margin:0">Retailer Potential Index (RPI)</h2><div class="spacer"></div>
        <select id="rcSel" style="min-width:200px">${opts}</select>
        <button class="btn ghost" id="rpiExport">⬇ Retailer CSV</button></div>
-     <div class="desc" style="margin-top:10px">Each country's authority‑weighted category potential is distributed across its retail landscape by <b>channel reach × category fit</b> — so a specialist owns TV/OLED, a kitchen studio owns dishwashers, an HVAC distributor owns System AC. That gives each retailer a <b>fair‑share potential</b>; enter <b>actual sell‑through</b> (${mlabel}) to score it (actual ÷ potential × 100), and see <b>whitespace</b> — potential sitting in retailers you're not active in. Retailers are a <b>SAMPLE template by channel archetype</b> — rename them to your real accounts and set each one's reach.</div>
+     <div class="desc" style="margin-top:10px">Each country's authority‑weighted category potential is distributed across its retail landscape by <b>channel reach × category fit</b> — so a specialist owns TV/OLED, a kitchen studio owns dishwashers, an HVAC distributor owns System AC. That gives each retailer a <b>fair‑share potential</b>; enter <b>actual sell‑through</b> (${mlabel}) to score it (actual ÷ potential × 100), and see <b>whitespace</b> — potential sitting in retailers you're not active in.
+     ${SELRC==="Croatia"
+       ?'<b>Croatia is populated with 29 real retailers/channel players</b> — reach = FINA top‑1500 revenue × estimated CE‑relevant share (H/M/L badge = data confidence; sources &amp; reasoning in <i>Croatia_Top1500_Analysis.xlsx</i>). Distributors (M SAN, ALSO, Microline…) are excluded to avoid double‑counting sell‑through. Cross‑border e‑tail (Amazon/Temu) and LG installer networks are invisible to FINA rankings.'
+       :'Retailers for this country are a <b>SAMPLE template by channel archetype</b> — rename them to your real accounts and set each one\'s reach.'}</div>
      <div class="kpis" style="margin-top:6px;grid-template-columns:repeat(4,1fr)">
        <div class="kpi"><div class="l">${SELRC} in‑scope potential</div><div class="v">${fmtPot(R2.totPot)}</div><div class="s">${rets.length} retailers · ${metricLabel()}</div></div>
        <div class="kpi"><div class="l">Active coverage</div><div class="v">${fmt(cov,0)}%</div><div class="s">of potential in active accounts</div></div>
