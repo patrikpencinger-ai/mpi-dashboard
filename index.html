@@ -214,46 +214,52 @@ const ARCH_W = {electro:1.0, mass:1.3, ecom:1.1, kitchen:0.4, diy:0.6, btob:0.7}
 let RET=[];            // retailer registry [{id,country,arch,name,weight,conf?}]
 let RETACT={};         // {retailerId: actual sell-through, in current METRIC}
 let SELRC="Croatia";   // selected country for the RPI tab
-// CROATIA: real retailers. weight = CE/appliance-relevant revenue (EUR M) = FINA top-1500 revenue × CE-share estimate.
-// Sources: Jutarnji/Hanza-FINA TOP-1500 FY2025 + fininfo/companywall research (see Croatia_Top1500_Analysis.xlsx, 'RPI Croatia retailers').
+// REAL retailers: reach = rev (total revenue EUR M, FACT from rankings/FINA/AJPES)
+//                       × ce (CE/appliance-relevant share of revenue, INFERENCE — extracts CE from mixed formats like Pevex DIY or Harvey Norman furniture)
+//                       × loc (share of that CE turnover sold to the LOCAL market, USER INPUT — filters out cross-border/export sales; default 1.00)
 // conf: H = revenue reported + share solid; M = share inferred; L = size or share estimated.
+// Croatia sources: Jutarnji/Hanza-FINA TOP-1500 FY2025 + fininfo/companywall research (see Croatia_Top1500_Analysis.xlsx, 'RPI Croatia retailers').
 // Distributors (M SAN, Microline, ALSO, Makromikro, Mobis, Smart Trade, Samsung branch) excluded — indirect tier, would double-count sell-through.
-const CRO_RET=[
-  {a:"electro",n:"Sancta Domenica",      w:162,  cf:"H"},
-  {a:"electro",n:"Elipso (E PLUS)",      w:141,  cf:"H"},
-  {a:"electro",n:"Tehno-mag",            w:80,   cf:"H"},
-  {a:"electro",n:"Svijet medija",        w:53,   cf:"H"},
-  {a:"electro",n:"Links",                w:41,   cf:"H"},
-  {a:"electro",n:"Harvey Norman",        w:25,   cf:"M"},
-  {a:"electro",n:"HGSpot",               w:30,   cf:"H"},
-  {a:"electro",n:"Instar Informatika",   w:26,   cf:"H"},
-  {a:"electro",n:"Centar tehnike",       w:25,   cf:"H"},
-  {a:"electro",n:"Vinkoprom",            w:14,   cf:"M"},
-  {a:"electro",n:"Chipoteka (Z-EL)",     w:11,   cf:"M"},
-  {a:"ecom",   n:"eKupi",                w:41,   cf:"M"},
-  {a:"ecom",   n:"Mall.hr",              w:18,   cf:"L"},
-  {a:"mass",   n:"Konzum (tehnika promo)",w:39,  cf:"L"},
-  {a:"mass",   n:"Lidl (promo weeks)",   w:43,   cf:"L"},
-  {a:"mass",   n:"Kaufland",             w:18,   cf:"L"},
-  {a:"mass",   n:"Metro C&C",            w:17,   cf:"M"},
-  {a:"mass",   n:"KTC",                  w:15,   cf:"M"},
-  {a:"kitchen",n:"Emmezeta (FLIBA)",     w:32,   cf:"M"},
-  {a:"kitchen",n:"MMM Agramservis",      w:27,   cf:"L"},
-  {a:"kitchen",n:"Lesnina XXXL",         w:14,   cf:"M"},
-  {a:"kitchen",n:"IKEA Hrvatska",        w:7.5,  cf:"M"},
-  {a:"diy",    n:"Pevex",                w:46,   cf:"M"},
-  {a:"diy",    n:"Bauhaus",              w:12,   cf:"M"},
-  {a:"btob",   n:"Deltron (Mitsubishi+Gree)",w:94,cf:"H"},
-  {a:"btob",   n:"Daikin Hrvatska",      w:34,   cf:"H"},
-  {a:"btob",   n:"Veka-ing (Toshiba/ME)",w:15,   cf:"L"},
-  {a:"btob",   n:"Frigo-kor (Samsung clima)",w:12,cf:"L"},
-  {a:"btob",   n:"Elektromeh. Toma (LG)",w:8,    cf:"L"},
-];
+const REAL_RET={
+ "Croatia":[
+  {a:"electro",n:"Sancta Domenica",      rev:161.7,ce:1.00, cf:"H"},
+  {a:"electro",n:"Elipso (E PLUS)",      rev:141.4,ce:1.00, cf:"H"},
+  {a:"electro",n:"Tehno-mag",            rev:88.9, ce:0.90, cf:"H"},
+  {a:"electro",n:"Svijet medija",        rev:52.9, ce:1.00, cf:"H"},
+  {a:"electro",n:"Links",                rev:45.7, ce:0.90, cf:"H"},
+  {a:"electro",n:"Harvey Norman",        rev:44.6, ce:0.55, cf:"M"},
+  {a:"electro",n:"HGSpot",               rev:32.0, ce:0.95, cf:"H"},
+  {a:"electro",n:"Instar Informatika",   rev:28.7, ce:0.90, cf:"H"},
+  {a:"electro",n:"Centar tehnike",       rev:25.4, ce:1.00, cf:"H"},
+  {a:"electro",n:"Vinkoprom",            rev:35.3, ce:0.40, cf:"M"},
+  {a:"electro",n:"Chipoteka (Z-EL)",     rev:12.6, ce:0.90, cf:"M"},
+  {a:"ecom",   n:"eKupi",                rev:63.0, ce:0.65, cf:"M"},
+  {a:"ecom",   n:"Mall.hr",              rev:36.7, ce:0.50, cf:"L"},
+  {a:"mass",   n:"Konzum (tehnika promo)",rev:1941.6,ce:0.02,cf:"L"},
+  {a:"mass",   n:"Lidl (promo weeks)",   rev:1423.3,ce:0.03,cf:"L"},
+  {a:"mass",   n:"Kaufland",             rev:881.3,ce:0.02, cf:"L"},
+  {a:"mass",   n:"Metro C&C",            rev:481.2,ce:0.035,cf:"M"},
+  {a:"mass",   n:"KTC",                  rev:307.1,ce:0.05, cf:"M"},
+  {a:"kitchen",n:"Emmezeta (FLIBA)",     rev:158.3,ce:0.20, cf:"M"},
+  {a:"kitchen",n:"MMM Agramservis",      rev:77.8, ce:0.35, cf:"L"},
+  {a:"kitchen",n:"Lesnina XXXL",         rev:183.3,ce:0.075,cf:"M"},
+  {a:"kitchen",n:"IKEA Hrvatska",        rev:165.7,ce:0.045,cf:"M"},
+  {a:"diy",    n:"Pevex",                rev:579.8,ce:0.08, cf:"M"},
+  {a:"diy",    n:"Bauhaus",              rev:264.0,ce:0.045,cf:"M"},
+  {a:"btob",   n:"Deltron (Mitsubishi+Gree)",rev:94.2,ce:1.00,cf:"H"},
+  {a:"btob",   n:"Daikin Hrvatska",      rev:33.8, ce:1.00, cf:"H"},
+  {a:"btob",   n:"Veka-ing (Toshiba/ME)",rev:15.0, ce:1.00, cf:"L"},
+  {a:"btob",   n:"Frigo-kor (Samsung clima)",rev:12.0,ce:1.00,cf:"L"},
+  {a:"btob",   n:"Elektromeh. Toma (LG)",rev:8.0,  ce:1.00, cf:"L"},
+ ],
+};
+const retReach=(r)=> r.rev!=null ? r.rev*r.ce*(r.loc!=null?r.loc:1) : r.weight;
 function initRET(){
   if(RET.length) return;
   COUNTRIES.forEach(x=>{
-    if(x.c==="Croatia"){
-      CRO_RET.forEach((r,i)=>RET.push({id:"Croatia|"+i+"|"+r.a, country:"Croatia", arch:r.a, name:r.n, weight:r.w, conf:r.cf}));
+    const real=REAL_RET[x.c];
+    if(real){
+      real.forEach((r,i)=>RET.push({id:x.c+"|"+i+"|"+r.a, country:x.c, arch:r.a, name:r.n, rev:r.rev, ce:r.ce, loc:1.00, conf:r.cf}));
     } else {
       Object.keys(ARCHE).forEach(a=>RET.push({id:x.c+"|"+a, country:x.c, arch:a, name:ARCHE[a].name, weight:ARCH_W[a]}));
     }
@@ -263,11 +269,11 @@ function initRET(){
 function computeRPI(country){
   const mk=MAIN_KEYS();
   const rets=RET.filter(r=>r.country===country);
-  const denom={}; mk.forEach(k=> denom[k]=rets.reduce((s,r)=>s+r.weight*ARCHE[r.arch].fit[k],0)||1);
+  const denom={}; mk.forEach(k=> denom[k]=rets.reduce((s,r)=>s+retReach(r)*ARCHE[r.arch].fit[k],0)||1);
   const pot={}; mk.forEach(k=>{ const row=R.cats[k].rows.find(x=>x.c===country); const a=authOf(k,country); pot[k]={val:row.value*a, units:row.units*a}; });
   const out=rets.map(r=>{
     let val=0, units=0, cs={};
-    mk.forEach(k=>{ const sh=r.weight*ARCHE[r.arch].fit[k]/denom[k]; cs[k]=sh; val+=pot[k].val*sh; units+=pot[k].units*sh; });
+    mk.forEach(k=>{ const sh=retReach(r)*ARCHE[r.arch].fit[k]/denom[k]; cs[k]=sh; val+=pot[k].val*sh; units+=pot[k].units*sh; });
     const act=+RETACT[r.id]||0;
     return {...r, val, units, cs, act};
   });
@@ -727,12 +733,20 @@ function renderRPI(){
   const fmtPot=v=>METRIC==="val"?eur(v):units(v);
 
   // retailer table
+  const isReal=rets.some(r=>r.rev!=null);
   const trows=rets.map(r=>{
     const perfChip=r.perf==null?'<span class="muted">—</span>':`<span class="tag" style="background:${r.perf>=110?'var(--good)':r.perf>=90?'var(--warn)':'var(--bad)'};color:#06231f">${fmt(r.perf)}</span>`;
+    const reachCells = r.rev!=null
+      ? `<td class="num"><input class="editbox" style="width:62px" data-rid="${r.id}" data-rf="rev" value="${r.rev}" title="Total revenue, EUR M (fact from ranking/registry)"></td>
+         <td class="num"><input class="editbox" style="width:46px" data-rid="${r.id}" data-rf="ce" value="${r.ce}" title="CE/appliance-relevant share of revenue (0–1) — extracts CE turnover from mixed formats (e.g. Pevex DIY, Harvey Norman furniture)"></td>
+         <td class="num"><input class="editbox" style="width:46px" data-rid="${r.id}" data-rf="loc" value="${r.loc}" title="Share of CE turnover sold to the LOCAL market (0–1) — filters out cross-border / export sales. Manual input."></td>
+         <td class="num"><b>${fmt(retReach(r),1)}</b></td>`
+      : `<td class="num muted small" colspan="3" style="text-align:center">— archetype —</td>
+         <td class="num"><input class="editbox" style="width:56px" data-rid="${r.id}" data-rf="weight" value="${r.weight}"></td>`;
     return `<tr>
       <td><input class="editbox" style="width:150px;text-align:left" data-rid="${r.id}" data-rf="name" value="${r.name}"></td>
       <td class="muted small">${ARCHE[r.arch].name}${r.conf?' '+confBadge(r.conf):''}</td>
-      <td class="num"><input class="editbox" style="width:56px" data-rid="${r.id}" data-rf="weight" value="${r.weight}"></td>
+      ${reachCells}
       <td class="num">${fmtPot(r.pot)}</td>
       <td class="num">${fmt(METRIC==="val"?r.shareVal:r.shareUnits,1)}%</td>
       <td class="num"><input class="editbox" data-ract="${r.id}" value="${r.act||''}" placeholder="0"></td>
@@ -777,9 +791,14 @@ function renderRPI(){
    <div class="card">
      <h2>Retailers — ${SELRC}</h2>
      <div style="overflow-x:auto"><table><thead><tr>
-       <th>Retailer (rename)</th><th>Channel</th><th>Reach</th><th>Potential</th><th>Share</th><th>Actual (${mlabel})</th><th>Perf</th><th>Status</th>
+       <th>Retailer (rename)</th><th>Channel</th>
+       <th title="Total revenue EUR M — fact from ranking/registry">Rev €M</th>
+       <th title="CE/appliance-relevant share of revenue — extracts CE turnover from mixed formats">CE‑share</th>
+       <th title="Share of CE turnover sold locally (not cross-border/export) — manual input">Local‑share</th>
+       <th title="Reach = Rev × CE-share × Local-share">Reach</th>
+       <th>Potential</th><th>Share</th><th>Actual (${mlabel})</th><th>Perf</th><th>Status</th>
      </tr></thead><tbody>${trows}</tbody></table></div>
-     <div class="note">“Whitespace” = a retailer with real potential where you have no sales yet — the distribution/listing gap to close. Reach is each account's relative selling power within the country (revenue, stores or floor space); the channel archetype sets which categories it over/under‑indexes on.</div>
+     <div class="note">“Whitespace” = a retailer with real potential where you have no sales yet — the distribution/listing gap to close. <b>Reach = Revenue × CE‑share × Local‑share</b>: revenue is fact (ranking/registry); <b>CE‑share</b> extracts the CE/appliance turnover out of mixed formats (Pevex's DIY, Harvey Norman's furniture); <b>Local‑share</b> filters out cross‑border/export sales — enter it manually per account (default 1.00). The channel archetype sets which categories the account over/under‑indexes on.</div>
    </div>
 
    <div class="grid2">
@@ -805,18 +824,23 @@ function renderRPI(){
   $("#rpiExport").onclick=exportRPI;
   $$("[data-rid]").forEach(inp=>inp.onchange=e=>{
     const r=RET.find(o=>o.id===e.target.dataset.rid); const f=e.target.dataset.rf;
-    r[f]= f==="weight"?(parseFloat(e.target.value)||0):e.target.value; renderRPI();
+    if(f==="name"){ r.name=e.target.value; }
+    else if(f==="rev"||f==="weight"){ r[f]=Math.max(0,parseFloat(e.target.value)||0); }
+    else if(f==="ce"||f==="loc"){ r[f]=Math.max(0,Math.min(1,parseFloat(e.target.value)||0)); }
+    renderRPI();
   });
   $$("[data-ract]").forEach(inp=>inp.onchange=e=>{ RETACT[e.target.dataset.ract]=+e.target.value||0; renderRPI(); });
 }
 
 function exportRPI(){
   const mk=MAIN_KEYS();
-  const head=["Country","Retailer","Channel","Reach_weight","Potential_value_eur","Potential_units","Share_value_%","Actual","Perf_index"];
+  const head=["Country","Retailer","Channel","Confidence","Revenue_EURm","CE_share","Local_share","Reach","Potential_value_eur","Potential_units","Share_value_%","Actual","Perf_index"];
   let lines=[head.join(",")];
   COUNTRIES.forEach(x=>{
     computeRPI(x.c).rets.forEach(r=>{
-      lines.push([`"${x.c}"`,`"${r.name}"`,`"${ARCHE[r.arch].name}"`,r.weight,Math.round(r.val),Math.round(r.units),
+      lines.push([`"${x.c}"`,`"${r.name}"`,`"${ARCHE[r.arch].name}"`,r.conf||"",
+        r.rev!=null?r.rev:"",r.ce!=null?r.ce:"",r.loc!=null?r.loc:"",retReach(r).toFixed(2),
+        Math.round(r.val),Math.round(r.units),
         r.shareVal.toFixed(2),r.act||0,r.perf==null?"":Math.round(r.perf)].join(","));
     });
   });
