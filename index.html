@@ -683,6 +683,7 @@ function renderCategory(){
   `;
   $("#catSel").onchange=e=>{SELCAT=e.target.value; renderCategory();};
   wireSort();
+  saveState();
 }
 
 function catTable(cat){
@@ -755,6 +756,7 @@ function renderCountry(){
    </div>
   `;
   $("#cSel").onchange=e=>{SELCOUNTRY=e.target.value; renderCountry();};
+  saveState();
 }
 
 // diverging authority cell colour: 0 = grey (out of scope), 1 = teal (full mandate)
@@ -812,6 +814,7 @@ function renderAuthority(){
   });
   $("#authFull").onclick=()=>{MAIN_KEYS().forEach(k=>COUNTRIES.forEach(x=>AUTH[k][x.c]=1)); recompute(); renderAuthority();};
   $("#authClear").onclick=()=>{MAIN_KEYS().forEach(k=>COUNTRIES.forEach(x=>AUTH[k][x.c]=0)); recompute(); renderAuthority();};
+  saveState();
 }
 
 // grouped horizontal bars for two series (neutral vs strategy)
@@ -941,6 +944,7 @@ function renderRPI(){
     renderRPI();
   });
   $$("[data-ract]").forEach(inp=>inp.onchange=e=>{ RETACT[e.target.dataset.ract]=+e.target.value||0; renderRPI(); });
+  saveState();
 }
 
 function exportRPI(){
@@ -1033,6 +1037,7 @@ function renderPerf(){
   $$("[data-act]").forEach(inp=>inp.onchange=e=>{
     ACTUALS[SELCAT]=ACTUALS[SELCAT]||{}; ACTUALS[SELCAT][e.target.dataset.act]=+e.target.value||0; renderPerf();
   });
+  saveState();
 }
 
 function renderAssum(){
@@ -1061,6 +1066,17 @@ function renderAssum(){
    </div>
 
    <div class="card">
+     <h2>Data persistence <span class="muted small">(your edits are auto‑saved)</span></h2>
+     <div class="desc">Every edit — Local‑share, actuals, authority, assumptions — is <b>auto‑saved in this browser</b> and restored on refresh. Storage is per‑site: the online site (mpi.er45.com) and a local <code>index.html</code> keep separate copies. Use <b>Save data file</b> to download a portable snapshot and <b>Load data file</b> to restore it here or move it between the online and local versions.</div>
+     <div class="row" style="margin-top:6px">
+       <button class="btn" id="saveFileBtn">⬇ Save data file</button>
+       <button class="btn ghost" id="loadFileBtn">⬆ Load data file</button>
+       <span class="spacer"></span>
+       <button class="btn ghost" id="resetBtn" title="Wipe saved edits in this browser and reload defaults">↺ Reset all to defaults</button>
+     </div>
+   </div>
+
+   <div class="card">
      <h2>Country inputs <span class="muted small">(editable — recomputes live)</span></h2>
      <div style="overflow-x:auto"><table><thead><tr><th>Country</th><th>Pop (M)</th><th>HH size</th><th>AIC</th><th>PLI</th><th>Urban %</th><th>CDD</th><th>Tour/cap</th><th>Comm idx</th></tr></thead><tbody>${ctry}</tbody></table></div>
    </div>
@@ -1069,7 +1085,6 @@ function renderAssum(){
      <h2>Category parameters <span class="muted small">(editable)</span></h2>
      <div class="desc">β = income elasticity · cw/tw/uw = climate/tourism/urban exponents · aspSens = how strongly premium mix rises with income · total = indicative annual scope units.</div>
      <div style="overflow-x:auto"><table><thead><tr><th>Category</th><th>Base</th><th>β</th><th>Climate</th><th>Tourism</th><th>Urban</th><th>ASP sens</th><th>ASP €</th><th>Scope units</th></tr></thead><tbody>${cat}</tbody></table></div>
-     <div class="row" style="margin-top:12px"><button class="btn ghost" id="resetBtn">↺ Reset to defaults</button></div>
    </div>
 
    <div class="card">
@@ -1105,7 +1120,10 @@ function renderAssum(){
   `;
   $$("[data-c]").forEach(inp=>inp.onchange=e=>{COUNTRIES[+e.target.dataset.c][e.target.dataset.f]=+e.target.value; recompute(); renderAll();});
   $$("[data-ci]").forEach(inp=>inp.onchange=e=>{CATS[+e.target.dataset.ci][e.target.dataset.cf]=+e.target.value; recompute(); renderAll();});
-  $("#resetBtn").onclick=()=>location.reload();
+  $("#saveFileBtn").onclick=exportState;
+  $("#loadFileBtn").onclick=importStateFile;
+  $("#resetBtn").onclick=()=>{ if(confirm("Wipe all saved edits in this browser and reload the built‑in defaults?")){ clearState(); location.reload(); } };
+  saveState();
 }
 
 // ---- TABLE SORTING --------------------------------------------------------
@@ -1146,10 +1164,61 @@ function exportCSV(){
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MPI_master_table.csv"; a.click();
 }
 
+// ---- PERSISTENCE (localStorage) -------------------------------------------
+// Every edit is auto-saved to the browser so a refresh keeps your data. Storage is per-origin:
+// the online site (mpi.er45.com) and a local index.html file each keep their own copy — use the
+// Save/Load data-file buttons (Assumptions tab) to move a dataset between them or to back it up.
+const LS_KEY="mpi_state_v2";
+function persistState(){
+  return { v:2, metric:METRIC, authw:AUTHW, tab:TAB, selcat:SELCAT, selcountry:SELCOUNTRY, selrc:SELRC,
+    retact:RETACT, auth:AUTH, targets:TARGETS, actuals:ACTUALS,
+    ret: RET.map(r=>({id:r.id,name:r.name,rev:r.rev,ce:r.ce,loc:r.loc,weight:r.weight})),
+    countries: COUNTRIES.map(x=>({c:x.c,pop:x.pop,hh:x.hh,aic:x.aic,pli:x.pli,urb:x.urb,cdd:x.cdd,tour:x.tour,comm:x.comm})),
+    cats: CATS.map(c=>({k:c.k,beta:c.beta,cw:c.cw,tw:c.tw,uw:c.uw,aspSens:c.aspSens,asp:c.asp,total:c.total})) };
+}
+function applyState(s){
+  if(!s || s.v!==2) return false;
+  const CK=CATS.map(c=>c.k), CN=COUNTRIES.map(x=>x.c), TB=["overview","category","country","authority","rpi","perf","assum"];
+  if(s.metric==="val"||s.metric==="vol") METRIC=s.metric;
+  if(typeof s.authw==="boolean") AUTHW=s.authw;
+  if(TB.includes(s.tab)) TAB=s.tab;
+  if(CK.includes(s.selcat)) SELCAT=s.selcat;
+  if(CN.includes(s.selcountry)) SELCOUNTRY=s.selcountry;
+  if(CN.includes(s.selrc)) SELRC=s.selrc;
+  if(s.retact && typeof s.retact==="object") RETACT=s.retact;
+  if(s.auth && typeof s.auth==="object") AUTH=s.auth;
+  if(s.targets && typeof s.targets==="object") TARGETS=s.targets;
+  if(s.actuals && typeof s.actuals==="object") ACTUALS=s.actuals;
+  if(Array.isArray(s.ret)){ const m=Object.fromEntries(s.ret.map(r=>[r.id,r]));
+    RET.forEach(r=>{ const o=m[r.id]; if(o) ["name","rev","ce","loc","weight"].forEach(f=>{ if(o[f]!==undefined&&o[f]!==null) r[f]=o[f]; }); }); }
+  if(Array.isArray(s.countries)){ const m=Object.fromEntries(s.countries.map(x=>[x.c,x]));
+    COUNTRIES.forEach(x=>{ const o=m[x.c]; if(o) ["pop","hh","aic","pli","urb","cdd","tour","comm"].forEach(f=>{ if(typeof o[f]==="number") x[f]=o[f]; }); }); }
+  if(Array.isArray(s.cats)){ const m=Object.fromEntries(s.cats.map(c=>[c.k,c]));
+    CATS.forEach(c=>{ const o=m[c.k]; if(o) ["beta","cw","tw","uw","aspSens","asp","total"].forEach(f=>{ if(typeof o[f]==="number") c[f]=o[f]; }); }); }
+  return true;
+}
+function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(persistState())); }catch(e){} }
+function loadState(){ try{ return applyState(JSON.parse(localStorage.getItem(LS_KEY)||"null")); }catch(e){ return false; } }
+function clearState(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+function exportState(){
+  const blob=new Blob([JSON.stringify(persistState(),null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="MPI_data.json"; a.click();
+}
+function importStateFile(){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept=".json,application/json";
+  inp.onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const rd=new FileReader();
+    rd.onload=()=>{ try{ if(applyState(JSON.parse(rd.result))){ saveState(); recompute(); showTab(TAB); }
+      else alert("That doesn't look like an MPI data file (wrong version or format)."); }
+      catch(err){ alert("Could not read file: "+err.message); } };
+    rd.readAsText(f); };
+  inp.click();
+}
+
 // ---- ROUTING --------------------------------------------------------------
 let TAB="overview";
 function renderAll(){
   renderScope();
+  $$("#metricSeg button").forEach(b=>b.classList.toggle("on",b.dataset.m===METRIC)); // keep toggle synced to restored state
   if(TAB==="overview")renderOverview();
   if(TAB==="category")renderCategory();
   if(TAB==="country")renderCountry();
@@ -1157,7 +1226,8 @@ function renderAll(){
   if(TAB==="rpi")renderRPI();
   if(TAB==="perf")renderPerf();
   if(TAB==="assum")renderAssum();
-  $("#footer").innerHTML=`MPI Phase 1 · ${COUNTRIES.length} markets × ${CATS.length} category lines · dependency‑free, runs offline · indicative data — replace with internal market figures. Reference (pop‑weighted): AIC ${fmt(R.REF.aic,1)} · CDD ${fmt(R.REF.cdd)} · Tour ${fmt(R.REF.tour,1)} · Urban ${fmt(R.REF.urb)}%.`;
+  $("#footer").innerHTML=`MPI Phase 1 · ${COUNTRIES.length} markets × ${CATS.length} category lines · edits auto‑saved in this browser · runs offline. Reference (pop‑weighted): AIC ${fmt(R.REF.aic,1)} · CDD ${fmt(R.REF.cdd)} · Tour ${fmt(R.REF.tour,1)} · Urban ${fmt(R.REF.urb)}%.`;
+  saveState();
 }
 function showTab(t){
   TAB=t;
@@ -1171,8 +1241,9 @@ $("#exportBtn").onclick=exportCSV;
 
 // ---- INIT -----------------------------------------------------------------
 initRET();
+loadState();     // restore any saved edits from this browser before first render
 recompute();
-showTab("overview");
+showTab(TAB);
 </script>
 </body>
 </html>

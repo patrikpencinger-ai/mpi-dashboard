@@ -25,7 +25,9 @@ The dashboard's **Assumptions tab** holds the same inputs as live‑editable tab
 4. **Authority matrix** — editable country × category mandate grid (1 = full authority, 0 = out of scope). Produces a **strategy‑weighted composite** kept separate from the neutral demand model, and can drive the target split.
 5. **Retailers (RPI)** — distributes each country's category potential across its retail landscape by **channel reach × category fit**; enter actual sell‑through to score each retailer, see **whitespace** (untapped accounts) and a **cross‑country rollup** (office scorecard). **Croatia is populated with 29 real retailers/channel players** (reach = FINA top‑1500 revenue × estimated CE‑relevant share, confidence‑badged); other countries carry editable channel‑archetype templates — rename to your real accounts.
 6. **Targets & performance** — split a scope target by potential (optionally weighted by authority); paste actuals to score **Perf‑abs** (non‑zero‑sum) and **Perf‑rel**.
-7. **Assumptions & method** — editable inputs, methodology, data sources, Phase‑2 roadmap.
+7. **Assumptions & method** — editable inputs, methodology, data sources, Phase‑2 roadmap, and **data persistence**.
+
+**Your edits are auto‑saved.** Every change — Local‑share, actuals, authority weights, assumptions — is stored in your browser and restored on refresh. Storage is per‑site, so the online site (mpi.er45.com) and a local `index.html` keep separate copies; use **Save data file / Load data file** (Assumptions tab) to download a portable snapshot and move it between them or back it up. **Reset all to defaults** wipes the saved edits.
 
 Top‑right: toggle **Value (€) / Volume (units)** and **Export master CSV**.
 
