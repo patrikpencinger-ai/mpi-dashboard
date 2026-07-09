@@ -282,6 +282,87 @@ const REAL_RET={
   {a:"btob",   n:"Experto Int. (Toshiba)",rev:2.2, ce:1.00, cf:"M"},
   {a:"btob",   n:"Procool (Daikin VRV agent)",rev:0.9,ce:1.00,cf:"L"},
  ],
+ // Bosnia sources: Bloomberg Adria BiH "Top 10 trgovaca" + Poslovne novine/Klix "99/100 najvećih" (FY2023) +
+ // companywall.ba / akta.ba / D&B profiles. Revenue in BAM (KM) ÷ 1.95583 (fixed peg) → EUR. Vintages mixed
+ // (Bingo & Tropic FY2024; most others FY2023) — BiH filings less accessible than HR/SI, so many cf:"L".
+ // Bingo & FIS are grocery-anchored hypermarkets that also run big tehnika + DIY + furniture depts — ce is the
+ // appliance/CE slice only (Bingo runs a dedicated "Bingo tehnika" catalog; FIS carries more tehnika+DIY, ce↑).
+ // Mercator BH merged into Konzum (now only a brand) — folded into the Konzum line. Distributors/wholesalers
+ // (Omega, M SAN BH) and manufacturers (Standard Furniture, ArcelorMittal, Violeta) excluded.
+ "Bosnia & Herz.":[   // key MUST match COUNTRIES entry c:"Bosnia & Herz." for initRET to bind it
+  {a:"electro",n:"Domod",                 rev:51.5, ce:0.95, cf:"M"}, // largest pure tehnika salon chain (13 stores); rev ~100.7M KM, year approx
+  {a:"electro",n:"Robot General Trading", rev:112.4,ce:0.45, cf:"M"}, // 219.9M KM general trader: food+chem+tools+white goods (own AWT brand)+AV → ce = appliance/CE slice
+  {a:"ecom",   n:"eKupi.ba (Vitez)",      rev:13.1, ce:0.60, cf:"M"}, // 25.7M KM regional webshop (food/chem/tech/toys)
+  {a:"ecom",   n:"eKupovina.ba",          rev:10.0, ce:0.85, cf:"L"}, // tehnika-focused webshop; revenue ESTIMATED
+  {a:"mass",   n:"Bingo (Tuzla)",         rev:1176.0,ce:0.06,cf:"L"}, // ~2.30B KM FY2024 hypermarket giant; ce = tehnika/appliance slice only (dedicated Bingo tehnika catalog)
+  {a:"mass",   n:"Tropic maloprodaja (RS)",rev:357.4,ce:0.03,cf:"L"}, // ~699M KM FY2024 Banja Luka grocery chain; small tehnika promos
+  {a:"mass",   n:"Konzum (+Mercator BH)", rev:252.0,ce:0.03, cf:"L"}, // 492.9M KM; Mercator BH merged into Konzum (brand only) — combined here; grocery + tehnika promos
+  {a:"mass",   n:"FIS Vitez",             rev:182.3,ce:0.10, cf:"L"}, // 356.5M KM mixed hypermarket + DIY + furniture + tehnika under one roof → ce higher than pure grocery
+  {a:"mass",   n:"Amko Komerc",           rev:122.7,ce:0.03, cf:"L"}, // ~240M KM Sarajevo grocery/cash&carry
+  {a:"kitchen",n:"JYSK BiH",              rev:44.1, ce:0.05, cf:"M"}, // 86.2M KM FY23/24, 31 stores; furniture/homeware, minimal small appliances
+  {a:"diy",    n:"Penny Plus (PENNYshop)",rev:72.4, ce:0.35, cf:"M"}, // 141.5M KM hardware/DIY chain (tools/sanitary/paint) with a large white-goods arm (PENNYshop)
+  {a:"btob",   n:"Erkond (Daikin, Čitluk)",rev:8.0, ce:1.00, cf:"L"}, // 1st Daikin dealer in BiH (since 1999), HVAC project; revenue ESTIMATED
+  {a:"btob",   n:"Tehnoelektronik (Daikin, Sarajevo)",rev:6.0,ce:1.00,cf:"L"}, // authorized Daikin importer/installer BiH; revenue ESTIMATED
+  {a:"btob",   n:"Gree/Mitsubishi climate importer",rev:5.0,ce:1.00,cf:"L"}, // placeholder for RAC importer tier; revenue ESTIMATED
+ ],
+ // Serbia sources: APR filings via companywall.rs (FY2024 where found, else FY2025 back-estimated) +
+ // Bloomberg Adria / instore.rs retail rankings. Revenue in RSD ÷ 117 → EUR. Electro is a 3-way race
+ // (Gigatron ≈ Tehnomedia ≈ Tehnomanija). WinWin/Emmi folded into Tehnomanija (Roaming group) to avoid
+ // double-count; Comtrade (IT distributor) & KupujemProdajem (C2C) excluded. DIY still nascent (Bauhaus just entered, no revenue).
+ "Serbia":[
+  {a:"electro",n:"Gigatron",              rev:172.2,ce:0.95, cf:"H"}, // FY24 20.15bn RSD; IT+CE+white goods
+  {a:"electro",n:"Tehnomedia",            rev:122.3,ce:0.90, cf:"H"}, // FY24 14.31bn RSD (Zaječar); AV+bela tehnika, part wholesale
+  {a:"electro",n:"Tehnomanija (+WinWin/Emmi)",rev:121.1,ce:0.95,cf:"H"}, // FY24 14.17bn RSD; Roaming group (WinWin Shop + Emmi House brands folded in)
+  {a:"ecom",   n:"Shoppster",             rev:17.1, ce:0.45, cf:"L"}, // ~2.0bn RSD; Telekom-linked general-merch e-tailer
+  {a:"ecom",   n:"Ananas",                rev:8.1,  ce:0.40, cf:"L"}, // FY25 0.95bn RSD reported — marketplace, true GMV far larger
+  {a:"mass",   n:"Delhaize Srbija (Maxi)",rev:1430.4,ce:0.02,cf:"L"}, // FY24 167.36bn RSD; appliances = promo end-caps
+  {a:"mass",   n:"Lidl Srbija",           rev:949.9,ce:0.025,cf:"L"}, // FY24 111.14bn RSD; Parkside/Silvercrest promos
+  {a:"mass",   n:"Mercator-S (Idea/Roda)",rev:911.0,ce:0.02, cf:"L"}, // FY24 106.59bn RSD
+  {a:"mass",   n:"Univerexport",          rev:513.0,ce:0.02, cf:"L"}, // ~60bn RSD ESTIMATED; domestic chain
+  {a:"mass",   n:"Metro C&C",             rev:342.0,ce:0.035,cf:"M"}, // ~40bn RSD; cash&carry, some pro appliances
+  {a:"mass",   n:"DIS",                   rev:325.0,ce:0.02, cf:"L"}, // ~38bn RSD ESTIMATED
+  {a:"mass",   n:"Aman",                  rev:282.0,ce:0.02, cf:"L"}, // ~33bn RSD ESTIMATED; discount chain
+  {a:"kitchen",n:"Forma Ideale",          rev:174.9,ce:0.10, cf:"M"}, // FY24 €174.85M; furniture mfr+retailer incl. built-in kitchens
+  {a:"kitchen",n:"IKEA Srbija",           rev:138.2,ce:0.045,cf:"M"}, // FY24 16.17bn RSD (+8.7%)
+  {a:"kitchen",n:"JYSK Srbija",           rev:81.2, ce:0.05, cf:"L"}, // ~9.5bn RSD; furniture/home
+  {a:"kitchen",n:"Matis",                 rev:42.7, ce:0.06, cf:"L"}, // ~5.0bn RSD; furniture, built-in kitchens
+  {a:"kitchen",n:"Emmezeta Srbija",       rev:38.5, ce:0.10, cf:"L"}, // ~4.5bn RSD; Merkury Market-owned (furniture+DIY)
+  {a:"kitchen",n:"Simpo",                 rev:19.8, ce:0.05, cf:"L"}, // FY24 2.32bn RSD; legacy furniture mfr, loss-making
+  {a:"btob",   n:"Elcom Trade (Midea)",   rev:20.5, ce:1.00, cf:"M"}, // ~2.4bn RSD; exclusive Midea importer
+  {a:"btob",   n:"Gas Lider",             rev:15.5, ce:0.85, cf:"M"}, // FY24 ~1.82bn RSD; heating/AC/ventilation wholesaler-installer
+  {a:"btob",   n:"Venting (Mitsubishi El.)",rev:4.7,ce:1.00, cf:"H"}, // FY24 0.549bn RSD; official Mitsubishi Electric rep
+  {a:"btob",   n:"Termomont (Šimanovci)", rev:3.9,  ce:0.70, cf:"L"}, // FY24 0.455bn RSD; heating-equipment mfr (boilers/radiators), borderline
+  {a:"btob",   n:"Heating&Cooling Expert (Daikin)",rev:2.4,ce:1.00,cf:"H"}, // FY24 0.282bn RSD; official Daikin agent RS/ME
+ ],
+ // Hungary sources: e-beszámoló filings via companywall.hu / opten.hu + Portfolio/Index retail rankings.
+ // Revenue in HUF ÷ 395 → EUR (FY2023 mostly; Media Markt FY ends Sep, Euronics Jun). eMAG (ex Extreme Digital)
+ // shrinking under Temu/Shein. Alza.hu is Hungary's #1 webshop by turnover but books most sales cross-border via
+ // Alza.cz — local Kft revenue only, so true reach is far larger than shown. Manufacturing plants (Samsung, Bosch,
+ // Electrolux) are supply-side, excluded; CBA/Coop franchise-central revenues excluded (don't reflect network sell-through).
+ "Hungary":[
+  {a:"electro",n:"Media Markt Magyarország",   rev:485.0,ce:0.97, cf:"H"}, // FY24 191.7bn HUF (FY ends 30 Sep); Saturn brand gone
+  {a:"electro",n:"Euronics (Vöröskő)",         rev:232.0,ce:0.97, cf:"H"}, // ~91.8bn HUF (FY ends 30 Jun); #1 HU-owned webshop
+  {a:"electro",n:"BestByte",                   rev:95.0, ce:0.95, cf:"M"}, // 37.4bn HUF FY23; entered restructuring early 2026
+  {a:"electro",n:"iPon Computer",              rev:50.0, ce:0.95, cf:"M"}, // 19.9bn HUF; IT/electronics e-tailer + stores
+  {a:"ecom",   n:"eMAG (ex Extreme Digital)",  rev:190.0,ce:0.60, cf:"M"}, // 75.2bn HUF FY23, falling fast (Dante Int'l/RO)
+  {a:"ecom",   n:"Alza.hu (local Kft only)",   rev:17.0, ce:0.70, cf:"L"}, // #1 HU webshop but bulk invoiced cross-border via Alza.cz
+  {a:"mass",   n:"Lidl Magyarország",          rev:3544.0,ce:0.02,cf:"L"}, // ~1,400bn HUF net FY23; promo weeks
+  {a:"mass",   n:"SPAR/Interspar",             rev:2232.0,ce:0.02,cf:"L"}, // 881.5bn HUF net FY23; Interspar hypermarkets carry appliances
+  {a:"mass",   n:"Tesco Global",               rev:2025.0,ce:0.04,cf:"L"}, // ~800bn net FY23; real appliance aisle
+  {a:"mass",   n:"Aldi Magyarország",          rev:1241.0,ce:0.02,cf:"L"}, // 490bn HUF net FY23; discounter promos
+  {a:"mass",   n:"Penny Market",               rev:1235.0,ce:0.02,cf:"L"}, // 488bn HUF net FY23; discounter promos
+  {a:"mass",   n:"Auchan Magyarország",        rev:1190.0,ce:0.05,cf:"L"}, // ~470bn net FY23; strong CE/appliance section
+  {a:"mass",   n:"Metro C&C",                  rev:886.0, ce:0.035,cf:"L"}, // size est ~350bn HUF; B2B cash&carry
+  {a:"kitchen",n:"IKEA Magyarország",          rev:370.0,ce:0.045,cf:"M"}, // 146.3bn HUF FY end Aug-23
+  {a:"kitchen",n:"JYSK Magyarország",          rev:170.0,ce:0.03, cf:"M"}, // 67.2bn HUF FY23; mostly furniture
+  {a:"kitchen",n:"XXXLutz (Möbelix/Mömax)",    rev:158.0,ce:0.075,cf:"M"}, // MMXH 62.3bn HUF; built-in kitchen appliances
+  {a:"diy",    n:"OBI Magyarország",           rev:374.0,ce:0.05, cf:"M"}, // 147.8bn HUF FY23 (-13% yoy)
+  {a:"diy",    n:"Praktiker",                  rev:217.0,ce:0.05, cf:"M"}, // 85.9bn HUF FY23
+  {a:"diy",    n:"Bauhaus Magyarország",       rev:91.0, ce:0.045,cf:"M"}, // 36bn HUF FY23
+  {a:"btob",   n:"Cool4U (Gree importer)",     rev:67.0, ce:1.00, cf:"H"}, // 26.6bn HUF; official Gree HU importer
+  {a:"btob",   n:"Daikin Hungary",             rev:63.0, ce:1.00, cf:"H"}, // 24.9bn HUF FY24; HVAC/heat-pump via partner network
+  {a:"btob",   n:"Thermotechnika-Crown Cool",  rev:14.0, ce:1.00, cf:"M"}, // 5.4bn HUF; refrigeration/climate wholesaler
+ ],
 };
 const retReach=(r)=> r.rev!=null ? r.rev*r.ce*(r.loc!=null?r.loc:1) : r.weight;
 function initRET(){
@@ -808,7 +889,7 @@ function renderRPI(){
        <button class="btn ghost" id="rpiExport">⬇ Retailer CSV</button></div>
      <div class="desc" style="margin-top:10px">Each country's authority‑weighted category potential is distributed across its retail landscape by <b>channel reach × category fit</b> — so a specialist owns TV/OLED, a kitchen studio owns dishwashers, an HVAC distributor owns System AC. That gives each retailer a <b>fair‑share potential</b>; enter <b>actual sell‑through</b> (${mlabel}) to score it (actual ÷ potential × 100), and see <b>whitespace</b> — potential sitting in retailers you're not active in.
      ${REAL_RET[SELRC]
-       ?`<b>${SELRC} is populated with ${REAL_RET[SELRC].length} real retailers/channel players</b> — reach = registry revenue × CE‑share × local‑share (H/M/L badge = data confidence; sources &amp; reasoning in <i>${SELRC==="Croatia"?"Croatia_Top1500_Analysis.xlsx":"Slovenia_Top300_Analysis.xlsx"}</i>). Pure distributors and manufacturers are excluded to avoid double‑counting sell‑through; cross‑border e‑tail (Amazon/Temu) is invisible to local rankings.`
+       ?`<b>${SELRC} is populated with ${REAL_RET[SELRC].length} real retailers/channel players</b> — reach = registry revenue × CE‑share × local‑share (H/M/L badge = data confidence; sources &amp; reasoning in <i>${({"Croatia":"Croatia_Top1500_Analysis.xlsx (FINA TOP‑1500)","Slovenia":"Slovenia_Top300_Analysis.xlsx (Delo/AJPES)","Serbia":"APR filings via companywall.rs + Bloomberg Adria rankings","Bosnia & Herz.":"Bloomberg Adria / companywall.ba filings","Hungary":"e‑beszámoló filings via companywall.hu / opten.hu"})[SELRC]||"the in‑code source notes"}</i>). Pure distributors and manufacturers are excluded to avoid double‑counting sell‑through; cross‑border e‑tail (Amazon/Temu) is invisible to local rankings.`
        :'Retailers for this country are a <b>SAMPLE template by channel archetype</b> — rename them to your real accounts and set each one\'s reach.'}</div>
      <div class="kpis" style="margin-top:6px;grid-template-columns:repeat(4,1fr)">
        <div class="kpi"><div class="l">${SELRC} in‑scope potential</div><div class="v">${fmtPot(R2.totPot)}</div><div class="s">${rets.length} retailers · ${metricLabel()}</div></div>
